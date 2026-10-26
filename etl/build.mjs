@@ -35,12 +35,26 @@ const RAW_DIR = new URL("../data/raw/", import.meta.url);
 const OUT_DIR = new URL("../data/", import.meta.url);
 const PUBLIC_DATA_DIR = new URL("../public/data/", import.meta.url);
 
+// Google occasionally refuses or drops a request from build machines; a short retry is
+// cheaper than a failed deploy.
+async function fetchText(url, label, tries = 4) {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch (e) {
+      if (i >= tries) throw new Error(`${label}: ${e.message}`);
+      console.warn(`${label}: ${e.message}, retrying (${i}/${tries - 1})`);
+      await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+}
+
 async function fetchTabs() {
   for (const tab of TABS) {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${tab.gid}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`${tab.file}: HTTP ${res.status}`);
-    await writeFile(new URL(`${tab.file}.csv`, RAW_DIR), await res.text());
+    await writeFile(new URL(`${tab.file}.csv`, RAW_DIR), await fetchText(url, tab.file));
     console.log(`fetched ${tab.file}`);
   }
 }
