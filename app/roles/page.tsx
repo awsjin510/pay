@@ -3,7 +3,11 @@ import Link from "next/link";
 import { RangeBar } from "@/components/RangeBar";
 import { fmtWan, roles } from "@/lib/data";
 
-export const metadata: Metadata = { title: "職務薪資" };
+export const metadata: Metadata = {
+  title: "職務薪資",
+  description: "軟體、韌體、硬體、IC 設計、PM、DevOps、資安等職務的科技業薪資中位數與分布。",
+  alternates: { canonical: "/roles/" },
+};
 
 export default function RolesPage() {
   const list = roles.filter((r) => r.stats).sort((a, b) => (b.stats!.monthly?.median ?? 0) - (a.stats!.monthly?.median ?? 0));

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { YearMix } from "@/components/DataNotes";
+import { PercentileTool } from "@/components/PercentileTool";
 import { RangeBar } from "@/components/RangeBar";
 import { LevelTable, StatsTiles } from "@/components/StatsOverview";
 import { fmtWan, roles, trackLabel } from "@/lib/data";
@@ -16,7 +18,12 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const r = roles.find((x) => x.id === id);
-  return { title: r ? `${r.label}薪資` : undefined };
+  if (!r?.stats) return {};
+  return {
+    title: `${r.label}薪資`,
+    description: `${r.label}薪資行情：月底薪中位數 ${r.stats.monthly?.median ?? "—"} 萬、總年薪中位數 ${r.stats.annual?.median ?? "—"} 萬，${r.stats.n} 筆分享，依產業、年資與公司比較。`,
+    alternates: { canonical: `/roles/${r.id}/` },
+  };
 }
 
 export default async function RolePage({ params }: Props) {
@@ -37,7 +44,12 @@ export default async function RolePage({ params }: Props) {
         <h1 className="mt-1 text-2xl font-semibold">{r.label}</h1>
       </header>
 
-      <StatsTiles stats={r.stats} />
+      <div className="space-y-2">
+        <StatsTiles stats={r.stats} />
+        <YearMix stats={r.stats} />
+      </div>
+
+      <PercentileTool values={r.monthlyValues} scope={r.label} />
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">依產業</h2>

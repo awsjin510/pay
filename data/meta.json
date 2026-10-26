@@ -1,11 +1,21 @@
 {
-  "generatedAt": "2026-10-26T03:46:54.882Z",
+  "generatedAt": "2026-10-26T04:06:52.698Z",
+  "site": "https://pay.operation.tw",
   "sheetId": "1-lMc-QktDGlO05je0zyR7P7QnfuoaECcsGUeKZZy6q0",
   "minN": 3,
   "recentFromYear": 2025,
   "total": 2108,
-  "namedCompanies": 767,
+  "sources": {
+    "sheet": 2108,
+    "web": 0
+  },
+  "namedCompanies": 765,
   "anonymousRows": 103,
+  "official": {
+    "year": 2025,
+    "companies": 1821,
+    "matched": 95
+  },
   "years": {
     "2023": 1340,
     "2024": 324,
@@ -17,6 +27,7 @@
     "monthly_unit_yuan": 382,
     "annual_estimated": 114,
     "bonus_invalid": 32,
+    "rare_title_merged": 430,
     "annual_unit_yuan": 131,
     "bonus_from_percent": 6,
     "monthly_unit_guess_k": 32,
@@ -24,6 +35,7 @@
     "annual_invalid": 25,
     "comment_harsh": 13,
     "monthly_invalid": 10,
+    "outlier": 11,
     "annual_far_above_estimate": 2,
     "future_date": 1
   },

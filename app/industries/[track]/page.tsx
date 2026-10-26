@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompanyTable } from "@/components/CompanyTable";
+import { YearMix } from "@/components/DataNotes";
+import { PercentileTool } from "@/components/PercentileTool";
 import { RangeBar } from "@/components/RangeBar";
 import { LevelTable, StatsTiles } from "@/components/StatsOverview";
 import { companies, fmtWan, meta, roleLabel, TRACK_IDS, tracks } from "@/lib/data";
@@ -17,7 +19,12 @@ type Props = { params: Promise<{ track: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { track } = await params;
   const t = tracks.find((x) => x.id === track);
-  return { title: t ? `${t.label}薪資` : undefined };
+  if (!t?.stats) return {};
+  return {
+    title: `${t.label}薪資`,
+    description: `台灣${t.label}薪資：月底薪中位數 ${t.stats.monthly?.median} 萬、總年薪中位數 ${t.stats.annual?.median} 萬，${t.stats.n} 筆匿名分享，依公司、職務、年資比較。`,
+    alternates: { canonical: `/industries/${t.id}/` },
+  };
 }
 
 export default async function IndustryPage({ params }: Props) {
@@ -36,7 +43,12 @@ export default async function IndustryPage({ params }: Props) {
         </p>
       </header>
 
-      <StatsTiles stats={t.stats} />
+      <div className="space-y-2">
+        <StatsTiles stats={t.stats} />
+        <YearMix stats={t.stats} />
+      </div>
+
+      <PercentileTool values={t.monthlyValues} scope={t.label} />
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">依年資</h2>

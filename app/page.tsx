@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CompanySearch } from "@/components/CompanySearch";
-import { companies, fmtWan, interviews, meta, tracks } from "@/lib/data";
+import { JsonLd } from "@/components/JsonLd";
+import { companies, fmtWan, interviews, meta, SITE_URL, tracks } from "@/lib/data";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default function Home() {
   const entries = companies.map(({ slug, name, en, aliases, track, n }) => ({ slug, name, en, aliases, track, n }));
@@ -8,13 +12,43 @@ export default function Home() {
 
   return (
     <div className="space-y-10">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          name: "台灣科技業薪資參考",
+          description: `台灣純軟、系統廠、IC 設計、雲端資安的匿名薪資分享彙總，共 ${meta.total} 筆，附官方非主管薪資揭露對照。`,
+          url: SITE_URL,
+          license: "https://creativecommons.org/licenses/by/4.0/",
+          isAccessibleForFree: true,
+          inLanguage: "zh-TW",
+          dateModified: meta.generatedAt,
+          spatialCoverage: "Taiwan",
+          distribution: ["companies", "roles", "industries"].map((f) => ({
+            "@type": "DataDownload",
+            encodingFormat: "text/csv",
+            contentUrl: `${SITE_URL}/data/${f}.csv`,
+          })),
+        }}
+      />
       <section>
         <h1 className="text-2xl font-semibold sm:text-3xl">台灣科技業薪資參考</h1>
         <p className="mt-2 text-ink-2">
-          {meta.total.toLocaleString()} 筆匿名分享，涵蓋純軟、系統廠與 IC 設計。月底薪、年終、總年薪與工時，一次看清楚。
+          {meta.total.toLocaleString()} 筆匿名分享，涵蓋純軟、系統廠、IC 設計與雲端資安，並對照 {meta.official.matched} 間上市櫃公司的官方薪資揭露。完全免費，不用分享才解鎖。
         </p>
         <div className="mt-6">
           <CompanySearch entries={entries} trackLabels={meta.trackLabels} />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+          <Link href="/compare/" className="rounded-full border border-border bg-surface px-3 py-1 hover:border-accent">
+            公司並排比較
+          </Link>
+          <Link href="/nicknames/" className="rounded-full border border-border bg-surface px-3 py-1 hover:border-accent">
+            PTT 代號對照
+          </Link>
+          <Link href="/submit/" className="rounded-full border border-accent px-3 py-1 text-accent hover:bg-accent hover:text-white">
+            匿名分享薪資
+          </Link>
         </div>
       </section>
 

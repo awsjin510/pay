@@ -46,7 +46,7 @@ export const COMPANIES = [
   { name: "微星", en: "MSI", track: "system", aliases: ["MSI", "微星科技"] },
   { name: "佳世達", en: "Qisda", track: "system", aliases: ["Qisda"] },
   { name: "智邦", en: "Accton", track: "system", aliases: ["智邦科技", "Accton"] },
-  { name: "光寶", en: "Lite-On", track: "system", aliases: ["光寶科技", "Liteon", "Lite-On"] },
+  { name: "光寶", en: "Lite-On", track: "system", aliases: ["光寶科技", "光寶科", "Liteon", "Lite-On"] },
   { name: "友達", en: "AUO", track: "system", aliases: ["友達光電", "AUO", "戀人"] },
   { name: "群創", en: "Innolux", track: "system", aliases: ["群創光電", "Innolux", "包子"] },
   { name: "神達", en: "MiTAC", track: "system", aliases: ["神達電腦", "MiTAC"] },
@@ -56,7 +56,8 @@ export const COMPANIES = [
   { name: "建興儲存科技", en: "Solid State Storage", track: "system", aliases: ["建興儲存"] },
   { name: "冠捷科技", en: "TPV", track: "system", aliases: ["冠捷", "TPV"] },
   { name: "Garmin", en: "Garmin", track: "system", aliases: ["台灣國際航電"] },
-  { name: "HP", en: "HP", track: "system", aliases: ["HP Inc.", "HP Inc"] },
+  // The listed company 惠普 (8424) is unrelated to HP, so never attach its official figures.
+  { name: "HP", en: "HP", track: "system", official: false, aliases: ["HP Inc.", "HP Inc", "惠普"] },
   { name: "Dell", en: "Dell", track: "system", aliases: [] },
 
   // ── 純軟 ──
@@ -82,7 +83,8 @@ export const COMPANIES = [
   { name: "KKCompany", en: "KKCompany", track: "soft", aliases: ["KKBOX"] },
   { name: "玉山銀行", en: "E.SUN Bank", track: "soft", aliases: ["玉山"] },
   { name: "國泰世華銀行", en: "Cathay United Bank", track: "soft", aliases: ["國泰世華"] },
-  { name: "中華電信", en: "Chunghwa Telecom", track: "soft", aliases: [] },
+  { name: "中華電信", en: "Chunghwa Telecom", track: "soft", aliases: ["中華電"] },
+  { name: "台灣大哥大", en: "Taiwan Mobile", track: "soft", aliases: ["台灣大", "台哥大"] },
   { name: "網家", en: "PChome", track: "soft", aliases: ["PChome", "pchome網家", "PChome網家"] },
   { name: "Yahoo", en: "Yahoo", track: "soft", aliases: [] },
   { name: "Amazon", en: "Amazon", track: "soft", aliases: ["AWS"] },

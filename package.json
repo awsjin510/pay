@@ -8,7 +8,10 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint",
-    "deploy": "next build && wrangler deploy"
+    "deploy": "npm run data:fetch && next build && wrangler deploy",
+    "preview": "next build && wrangler dev",
+    "review": "node scripts/review.mjs",
+    "db:migrate": "wrangler d1 migrations apply pay-db --remote"
   },
   "dependencies": {
     "next": "16.4.3",

@@ -1,11 +1,23 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Static assets only: `npm run build` writes the site to out/, Cloudflare serves it as-is.
+  // Static site from out/ plus a small API (worker/index.ts) for submissions and reports.
   "name": "pay",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./out",
-    "not_found_handling": "404-page"
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
   },
+  "d1_databases": [
+    {
+      "binding": "pay_db",
+      "database_name": "pay-db",
+      "database_id": "47594561-4e97-4540-88e2-dc8a0003cd69",
+      "migrations_dir": "worker/migrations"
+    }
+  ],
+  "observability": { "enabled": true },
   "routes": [{ "pattern": "pay.operation.tw", "custom_domain": true }]
 }

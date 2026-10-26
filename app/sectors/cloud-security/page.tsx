@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PercentileTool } from "@/components/PercentileTool";
 import { RangeBar } from "@/components/RangeBar";
 import { LevelTable } from "@/components/StatsOverview";
 import { SubmissionList } from "@/components/SubmissionList";
@@ -7,7 +8,8 @@ import { companies, fmtNum, fmtWan, interviews, meta, sectors, submissions, type
 
 export const metadata: Metadata = {
   title: "雲端 / 資安薪資",
-  description: "DevOps、SRE、雲端架構師與資安研究員、資安公司的薪資、年薪與面試心得。",
+  description: "台灣 DevOps、SRE、雲端架構師、資安研究員、SOC 與資安公司的薪資、年薪、證照與面試心得。",
+  alternates: { canonical: "/sectors/cloud-security/" },
 };
 
 export default function CloudSecurityPage() {
@@ -68,6 +70,55 @@ export default function CloudSecurityPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-semibold">細分職務</h2>
+        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead className="text-left text-xs text-ink-2">
+              <tr>
+                <th className="px-3 py-2 font-normal">職務</th>
+                <th className="px-3 py-2 text-right font-normal">筆數</th>
+                <th className="px-3 py-2 font-normal">月底薪分布</th>
+                <th className="px-3 py-2 text-right font-normal">月底薪</th>
+                <th className="px-3 py-2 text-right font-normal">年薪中位數</th>
+              </tr>
+            </thead>
+            <tbody className="tabular">
+              {[cloud, security].flatMap((sec) =>
+                sec.subRoles.map((s) => (
+                  <tr key={s.id} className="border-t border-border">
+                    <td className="px-3 py-2">
+                      {s.label}
+                      <div className="text-xs text-ink-3">{sec.id === "cloud" ? "雲端" : "資安"}</div>
+                    </td>
+                    <td className="px-3 py-2 text-right text-ink-2">{s.n}</td>
+                    <td className="w-1/3 px-3 py-2">
+                      <RangeBar dist={s.stats?.monthly ?? null} max={max} />
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {s.stats?.monthly ? `中位數 ${s.stats.monthly.median} 萬` : s.monthly.length ? `${s.monthly.join("、")} 萬` : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right">{fmtWan(s.stats?.annual?.median, 0)}</td>
+                  </tr>
+                )),
+              )}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-xs text-ink-3">
+          紅隊、GRC、雲端架構師等樣本仍少。新投稿表單可填證照（AWS、CKA、OSCP…）與面試題型，
+          <Link href="/submit/" className="underline">
+            歡迎分享
+          </Link>
+          。
+        </p>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <PercentileTool values={cloud.monthlyValues} scope="雲端 / DevOps / SRE 職務" />
+        <PercentileTool values={security.monthlyValues} scope="資安職務" />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">

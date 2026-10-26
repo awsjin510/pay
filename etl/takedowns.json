@@ -1,0 +1,5 @@
+{
+  "_doc": "Applied on every build. rows: drop the whole entry. comments: keep the numbers, drop the comment. Ids are the ones shown in /report/ links (e.g. soft-12, web-3).",
+  "rows": [],
+  "comments": []
+}
