@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SearchIcon } from "@/components/Icons";
+import { track } from "@/lib/track";
 
 export type SearchEntry = { slug: string; name: string; en: string | null; aliases: string[]; track: string; n: number };
 
@@ -26,6 +27,13 @@ export function CompanySearch({ entries, trackLabels }: { entries: SearchEntry[]
       .slice(0, 8)
       .map(([e]) => e);
   }, [q, entries]);
+
+  const empty = q.trim().length >= 2 && results.length === 0;
+  useEffect(() => {
+    if (!empty) return;
+    const t = setTimeout(() => track("search_empty", "home"), 1200);
+    return () => clearTimeout(t);
+  }, [empty, q]);
 
   return (
     <div className="relative">
@@ -53,7 +61,11 @@ export function CompanySearch({ entries, trackLabels }: { entries: SearchEntry[]
           )}
           {results.map((e) => (
             <li key={e.slug}>
-              <Link href={`/companies/${e.slug}/`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-surface-2">
+              <Link
+                href={`/companies/${e.slug}/`}
+                onClick={() => track("search_select", e.n >= 3 ? "home:stats" : "home:thin")}
+                className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-surface-2"
+              >
                 <span>
                   {e.name}
                   {e.en && e.en !== e.name && <span className="ml-2 text-sm text-ink-3">{e.en}</span>}

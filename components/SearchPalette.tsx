@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchIcon } from "@/components/Icons";
+import { track } from "@/lib/track";
 
 type Entry = { s: string; n: string; e: string | null; a: string[]; t: string; c: number; m: number | null };
 
@@ -43,8 +44,17 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
     input.current?.focus();
   }, [open]);
 
+  // A query that settles with no match is a demand signal for a company we don't cover.
+  const empty = open && q.trim().length >= 2 && entries.length > 0 && results.length === 0;
+  useEffect(() => {
+    if (!empty) return;
+    const t = setTimeout(() => track("search_empty", "palette"), 1200);
+    return () => clearTimeout(t);
+  }, [empty, q]);
+
   if (!open) return null;
   const go = (e: Entry) => {
+    track("search_select", e.m != null ? "palette:stats" : "palette:thin");
     onClose();
     router.push(`/companies/${e.s}/`);
   };

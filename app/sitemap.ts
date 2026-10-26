@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page("/sectors/it-services/", 0.9),
     page("/compare/", 0.8),
     page("/insights/", 0.8),
+    page("/offer/", 0.9),
     page("/nicknames/", 0.7),
     page("/roles/", 0.7),
     page("/submit/", 0.6),

@@ -7,6 +7,7 @@ import { SectionTabs } from "@/components/SectionTabs";
 import { PercentileTool } from "@/components/PercentileTool";
 import { StatTile } from "@/components/RangeBar";
 import { SubmissionList } from "@/components/SubmissionList";
+import { TrackView } from "@/components/TrackView";
 import { fmtWan, itServices, meta, submissions } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default function ItServicesPage() {
 
   return (
     <div className="space-y-10">
+      <TrackView name="answer_view" scope="sector:it" />
       <header>
         <h1 className="text-3xl font-black sm:text-4xl">資訊服務業薪資</h1>
         <p className="mt-2 text-sm text-ink-2">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { RangeBar } from "@/components/RangeBar";
+import { track } from "@/lib/track";
 import type { Dist } from "@/lib/data";
 
 export type CompareEntry = {
@@ -39,6 +40,13 @@ export function CompareTool({ entries, trackLabels }: { entries: CompareEntry[];
   const [chosenSlugs, setPicked] = useState<string[] | null>(null);
   const picked = chosenSlugs ?? fromUrl;
   const [q, setQ] = useState("");
+
+  const comparing = picked.length >= 2;
+  useEffect(() => {
+    if (comparing) track("compare_used", String(picked.length));
+    // Count each time a comparison becomes possible, not every change after that.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comparing]);
 
   useEffect(() => {
     if (chosenSlugs == null) return;

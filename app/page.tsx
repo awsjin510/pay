@@ -79,6 +79,12 @@ export default function Home() {
           <div className="mt-6 max-w-xl">
             <CompanySearch entries={entries} trackLabels={meta.trackLabels} />
           </div>
+          <p className="mt-3 max-w-xl text-sm">
+            拿到 offer 了？
+            <Link href="/offer/" className="ml-1 font-medium text-accent underline">
+              檢查它算高還是低
+            </Link>
+          </p>
           <div className="mt-3 flex max-w-xl flex-wrap items-center gap-2 text-sm">
             <span className="text-ink-3">常被查：</span>
             {POPULAR.filter((p) => companyBySlug(p.slug)).map((p) => (

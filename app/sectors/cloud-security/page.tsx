@@ -4,6 +4,7 @@ import { PercentileTool } from "@/components/PercentileTool";
 import { RangeBar } from "@/components/RangeBar";
 import { LevelTable } from "@/components/StatsOverview";
 import { SubmissionList } from "@/components/SubmissionList";
+import { TrackView } from "@/components/TrackView";
 import { companies, fmtNum, fmtWan, interviews, meta, sectors, submissions, type Stats } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function CloudSecurityPage() {
 
   return (
     <div className="space-y-10">
+      <TrackView name="answer_view" scope="sector:cloudsec" />
       <header>
         <h1 className="text-3xl font-black sm:text-4xl">雲端 / 資安薪資</h1>
         <p className="mt-2 text-sm text-ink-2">

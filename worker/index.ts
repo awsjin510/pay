@@ -77,6 +77,7 @@ async function createSubmission(request: Request, env: Env) {
   const interviewTopics = str(b.interview_topics, "面試題型", 400);
   const comment = str(b.comment, "心得", 1000);
   const ref = typeof b.ref === "string" ? b.ref.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40) || null : null;
+  const kind = b.kind === "offer" ? "offer" : "current";
   const auto = autoApprovable({ company, role, monthly, bonus, annual, freeText: [certifications, interviewTopics, comment] });
 
   const hash = await ipHash(request);
@@ -85,8 +86,8 @@ async function createSubmission(request: Request, env: Env) {
     .prepare(
       `INSERT INTO submissions (track, company, role, level, yoe, yoe_current, monthly, bonus_months, annual,
         hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment,
-        ip_hash, ref, status, auto_approved)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ip_hash, ref, status, auto_approved, kind)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       track,
@@ -110,6 +111,7 @@ async function createSubmission(request: Request, env: Env) {
       ref,
       auto ? "approved" : "pending",
       auto ? 1 : 0,
+      kind,
     )
     .run();
   return json({ ok: true, status: auto ? "approved" : "pending" }, 201);
@@ -147,6 +149,30 @@ async function createReport(request: Request, env: Env) {
   return json({ ok: true }, 201);
 }
 
+// Product analytics: whitelisted event names, aggregated into daily counters. Nothing that
+// identifies a person or device is read or stored.
+const EVENTS = new Set([
+  "answer_view", "thin_view", "search_select", "search_empty", "submit_view", "submit_start", "submit_success",
+  "submit_error", "share_click", "share_download", "offer_view", "offer_check", "offer_share_click", "compare_used",
+]);
+const clean = (v: unknown, max: number) => (typeof v === "string" ? v.toLowerCase().replace(/[^a-z0-9:_-]/g, "").slice(0, max) : "");
+
+async function recordEvent(request: Request, env: Env) {
+  const text = await request.text();
+  if (text.length > 500) return new Response(null, { status: 204 });
+  const b = JSON.parse(text) as Record<string, unknown>;
+  const name = clean(b.name, 30);
+  if (!EVENTS.has(name)) return new Response(null, { status: 204 });
+  await env.pay_db
+    .prepare(
+      `INSERT INTO events (day, name, scope, ref, count) VALUES (date('now'), ?, ?, ?, 1)
+       ON CONFLICT (day, name, scope, ref) DO UPDATE SET count = count + 1`,
+    )
+    .bind(name, clean(b.scope, 40), clean(b.ref, 40))
+    .run();
+  return new Response(null, { status: 204 });
+}
+
 // Counts only, for the daily review reminder (.github/workflows/review-alert.yml).
 async function pendingCount(env: Env) {
   const subs = await env.pay_db.prepare("SELECT COUNT(*) AS n FROM submissions WHERE status = 'pending'").first<{ n: number }>();
@@ -159,7 +185,7 @@ async function listApproved(env: Env) {
   const { results } = await env.pay_db
     .prepare(
       `SELECT id, created_at, track, company, role, level, yoe, yoe_current, monthly, bonus_months, annual,
-        hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment
+        hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment, kind
        FROM submissions WHERE status = 'approved' ORDER BY id`,
     )
     .all();
@@ -174,6 +200,7 @@ const worker = {
       if (pathname === "/api/reports" && request.method === "POST") return await createReport(request, env);
       if (pathname === "/api/approved" && request.method === "GET") return await listApproved(env);
       if (pathname === "/api/pending-count" && request.method === "GET") return await pendingCount(env);
+      if (pathname === "/api/events" && request.method === "POST") return await recordEvent(request, env);
       if (pathname.startsWith("/api/")) return json({ error: "not found" }, 404);
       return env.ASSETS.fetch(request);
     } catch (e) {

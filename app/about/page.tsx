@@ -85,6 +85,7 @@ export default function AboutPage() {
           <li>心得中的「姓氏＋職稱」（例如某董、某經理）、email、電話會自動遮蔽。</li>
           <li>含針對個人的貶損字眼的 {f("comment_harsh")} 則心得不公開，只保留薪資數字。</li>
           <li>網站投稿不收集姓名與 email；防灌票只用當日加鹽的 IP 雜湊。</li>
+          <li>使用統計只累計每日事件次數（看了哪類頁面、是否完成投稿、從哪個管道來），不記錄 IP、cookie、裝置或輸入的薪資；Offer 檢查器的比對完全在瀏覽器內完成。</li>
         </ul>
       </section>
 

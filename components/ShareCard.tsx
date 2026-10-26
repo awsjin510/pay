@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { track } from "@/lib/track";
 
 export type ShareResult = { trackLabel: string; trackPct: number; companyName?: string; companyPct?: number };
 
@@ -90,6 +91,7 @@ export function ShareCard({ result }: { result: ShareResult }) {
 
   const blob = () => new Promise<Blob | null>((ok) => canvas.current!.toBlob(ok, "image/png"));
   const download = async () => {
+    track("share_download");
     const b = await blob();
     if (!b) return;
     const a = document.createElement("a");
@@ -99,6 +101,7 @@ export function ShareCard({ result }: { result: ShareResult }) {
     URL.revokeObjectURL(a.href);
   };
   const share = async () => {
+    track("share_click");
     const b = await blob();
     const file = b && new File([b], "my-salary-position.png", { type: "image/png" });
     const data = { title: "我的薪資位置", text: "免費查科技業薪水，也匿名分享你的：", url: "https://pay.operation.tw/?ref=share", files: file ? [file] : [] };

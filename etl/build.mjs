@@ -190,7 +190,7 @@ const annualOf = (r) => r.annual ?? r.annualEstimate;
 // Sorted monthly base pay, for the "where do I stand" percentile tool.
 const monthlyValues = (rows) =>
   rows
-    .filter((r) => !isOutlier(r) && r.monthly != null)
+    .filter((r) => !isOutlier(r) && !isOffer(r) && r.monthly != null)
     .map((r) => round(r.monthly, 1))
     .sort((a, b) => a - b);
 
@@ -201,7 +201,7 @@ const YOE_BUCKETS = [
 ];
 
 function yoeCurve(rows) {
-  const pay = rows.filter((r) => !isOutlier(r) && r.yoe != null);
+  const pay = rows.filter((r) => !isOutlier(r) && !isOffer(r) && r.yoe != null);
   return YOE_BUCKETS.map(([lo, hi, label]) => {
     const sub = pay.filter((r) => r.yoe >= lo && r.yoe < hi);
     return { label, n: sub.length, monthly: dist(sub.map((r) => r.monthly), 1) };
@@ -214,7 +214,11 @@ function yearMix(rows) {
   return out;
 }
 
-function summarize(rows) {
+// Offers people received are counted separately (see company.offers); they are not pay.
+const isOffer = (r) => r.kind === "offer";
+
+function summarize(all) {
+  const rows = all.filter((r) => !isOffer(r));
   if (rows.length < MIN_N) return null;
   // Outliers stay visible as individual entries but never move a median.
   const pay = rows.filter((r) => !isOutlier(r));
@@ -269,6 +273,7 @@ async function sheetRecords() {
       out.push({
         id: `${tab.track}-${i + 1}`,
         source: "sheet",
+        kind: "current",
         track: tab.track,
         date: r[0], company: r[1], role: r[2], level: r[3], yoe: r[4], yoeCurrent: r[5],
         monthly: r[6], bonus: r[7], annual: r[8], hours: r[9], overtime: r[10], overtimeFreq: r[11],
@@ -285,6 +290,7 @@ async function webRecords() {
   return rows.map((r) => ({
     id: `web-${r.id}`,
     source: "web",
+    kind: r.kind === "offer" ? "offer" : "current",
     track: ["soft", "system", "ic"].includes(r.track) ? r.track : "soft",
     date: r.created_at, company: r.company, role: r.role, level: r.level ?? "", yoe: r.yoe, yoeCurrent: r.yoe_current,
     monthly: r.monthly, bonus: r.bonus_months, annual: r.annual, hours: r.hours_per_day, overtime: r.overtime_per_month,
@@ -383,6 +389,7 @@ async function main() {
     const row = {
       id: rec.id,
       source: rec.source,
+      kind: rec.kind,
       track: rec.track,
       companyKey,
       companyRaw: rawCompany,
@@ -468,6 +475,12 @@ async function main() {
       recentStats: summarize(c.rows.filter((r) => r.year >= RECENT_FROM_YEAR)),
       monthlyValues: stats ? monthlyValues(c.rows) : [],
       curve: stats ? yoeCurve(c.rows) : [],
+      offers: (() => {
+        const o = c.rows.filter((r) => isOffer(r) && r.monthly != null);
+        if (!o.length) return null;
+        const v = o.map((r) => r.monthly).sort((a, b) => a - b);
+        return { n: o.length, median: o.length >= MIN_N ? round(quantile(v, 0.5), 1) : null, latest: o.map((r) => r.date).filter(Boolean).sort().at(-1) ?? null };
+      })(),
     });
   }
   for (const s of submissions) delete s.companyKey;
@@ -643,6 +656,26 @@ async function main() {
     JSON.stringify(
       companyList.map((c) => ({ s: c.slug, n: c.name, e: c.en, a: c.aliases, t: c.track, c: c.n, m: c.stats?.monthly?.median ?? null })),
     ),
+  );
+
+  // Offer checker: every comparable row, compact, so the browser can match company → role →
+  // years of experience without sending the person's offer anywhere.
+  const roleIds = [...ROLES, OTHER_ROLE].map((r) => r.id);
+  const trackIds = TABS.filter((t) => t.track).map((t) => t.track);
+  const companyIdx = new Map(companyList.map((c, i) => [c.slug, i]));
+  await writeFile(
+    new URL("../public/offer-index.json", import.meta.url),
+    JSON.stringify({
+      companies: companyList.map((c) => c.slug),
+      roles: roleIds,
+      tracks: trackIds,
+      official: Object.fromEntries(companyList.filter((c) => c.official).map((c) => [c.slug, c.official.median])),
+      recentFromYear: RECENT_FROM_YEAR,
+      // [company index or -1, track index, role index, yoe or -1, monthly 萬, year or 0]
+      rows: submissions
+        .filter((r) => r.monthly != null && !isOutlier(r) && !isOffer(r))
+        .map((r) => [r.company ? companyIdx.get(r.company) : -1, trackIds.indexOf(r.track), roleIds.indexOf(r.role), r.yoe ?? -1, r.monthly, r.year ?? 0]),
+    }),
   );
 
   // After submitting, the form shows the person's percentile from these sorted values.

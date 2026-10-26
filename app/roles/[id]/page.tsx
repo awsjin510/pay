@@ -6,6 +6,7 @@ import { SalaryDistribution } from "@/components/charts/SalaryDistribution";
 import { OccupationRef } from "@/components/OccupationRef";
 import { RangeBar } from "@/components/RangeBar";
 import { StatsHero } from "@/components/StatsHero";
+import { TrackView } from "@/components/TrackView";
 import { fmtWan, meta, roles, trackLabel } from "@/lib/data";
 
 export const dynamicParams = false;
@@ -39,6 +40,7 @@ export default async function RolePage({ params }: Props) {
 
   return (
     <div className="space-y-8">
+      <TrackView name="answer_view" scope={`role:${r.id}`} />
       <header>
         <nav className="text-sm text-ink-2" aria-label="麵包屑">
           <Link href="/roles/" className="hover:text-ink">

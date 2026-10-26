@@ -7,6 +7,7 @@ import { CompanyTable } from "@/components/CompanyTable";
 import { RangeBar } from "@/components/RangeBar";
 import { SectionTabs } from "@/components/SectionTabs";
 import { StatsHero } from "@/components/StatsHero";
+import { TrackView } from "@/components/TrackView";
 import { companies, fmtWan, meta, roleLabel, TRACK_IDS, tracks } from "@/lib/data";
 
 export const dynamicParams = false;
@@ -37,6 +38,7 @@ export default async function IndustryPage({ params }: Props) {
 
   return (
     <div className="space-y-8">
+      <TrackView name="answer_view" scope={`industry:${t.id}`} />
       <header>
         <h1 className="text-3xl font-black sm:text-4xl">{t.label}薪資</h1>
         <p className="mt-2 text-ink-2">

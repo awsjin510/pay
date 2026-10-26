@@ -14,6 +14,7 @@ const INDUSTRIES = [
   { href: "/sectors/cloud-security/", label: "雲端／資安" },
 ];
 const LINKS = [
+  { href: "/offer/", label: "Offer 檢查" },
   { href: "/roles/", label: "職務" },
   { href: "/compare/", label: "比較" },
   { href: "/nicknames/", label: "代號表" },
@@ -177,7 +178,7 @@ export function SiteHeader() {
               </Link>
             ))}
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-1 border-t border-border pt-3">
+          <div className="mt-3 grid grid-cols-2 gap-1 border-t border-border pt-3">
             {LINKS.map((l) => (
               <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-center hover:bg-surface-2">
                 {l.label}

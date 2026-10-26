@@ -59,11 +59,13 @@ export type Company = {
   recentStats: Stats | null;
   monthlyValues: number[];
   curve: CurvePoint[];
+  offers: { n: number; median: number | null; latest: string | null } | null;
 };
 
 export type Submission = {
   id: string;
   source: "sheet" | "web";
+  kind: "current" | "offer";
   track: TrackId;
   company?: string;
   companyRaw: string;

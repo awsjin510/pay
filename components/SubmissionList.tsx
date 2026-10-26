@@ -38,6 +38,7 @@ function Source({ r }: { r: Submission }) {
 function Flags({ r, recentFromYear }: { r: Submission; recentFromYear: number }) {
   return (
     <>
+      {r.kind === "offer" && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs text-ink">收到的 offer</span>}
       {r.flags.includes("outlier") && <span className="rounded bg-surface-2 px-1.5 py-0.5 text-xs text-ink-2">疑似填錯・未計入</span>}
       {r.year != null && r.year < recentFromYear && <span className="text-xs text-ink-3">{r.year} 年</span>}
     </>

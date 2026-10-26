@@ -29,7 +29,7 @@ export default function SubmitPage() {
         </ul>
         <h2 className="text-xl font-bold">隱私</h2>
         <p className="text-ink-2">
-          我們不收集姓名或 email。為防灌票，僅記錄當日加鹽的 IP 雜湊值（隔天即無法比對），不公開、不提供第三方。
+          我們不收集姓名或 email。為防灌票，僅記錄當日加鹽的 IP 雜湊值（隔天即無法比對），不公開、不提供第三方。網站使用統計只累計「事件次數」（例如今天有幾人送出投稿），不含任何個人、裝置或薪資資料。
         </p>
       </aside>
     </div>

@@ -6,6 +6,7 @@
 //   npm run review -- resolve 2         # close report 2
 //   npm run review -- recent            # last 20 auto-approved submissions, to spot-check
 //   npm run review -- stats             # submissions by status, by ref (?ref=…) and by week
+//   npm run review -- funnel 28         # product funnel and North Star for the last N days
 import { execFileSync } from "node:child_process";
 
 const DB = "pay-db";
@@ -60,6 +61,29 @@ if (!action) {
   table("依狀態", sql("SELECT status AS k, COUNT(*) AS n FROM submissions GROUP BY status ORDER BY n DESC"));
   table("依來源 ref", sql("SELECT ref AS k, COUNT(*) AS n FROM submissions GROUP BY ref ORDER BY n DESC"));
   table("依週（近 12 週）", sql("SELECT strftime('%Y-W%W', created_at) AS k, COUNT(*) AS n FROM submissions GROUP BY k ORDER BY k DESC LIMIT 12"));
+} else if (action === "funnel") {
+  const days = Math.max(1, Math.min(365, Number(args[0]) || 28));
+  const since = `date('now', '-${days} days')`;
+  const total = (name, scopeLike = "%") =>
+    sql(`SELECT COALESCE(SUM(count), 0) AS n FROM events WHERE day >= ${since} AND name = '${name}' AND scope LIKE '${scopeLike}'`)[0]?.n ?? 0;
+  const answered = total("answer_view") + total("offer_check") - total("offer_check", "none");
+  const thin = total("thin_view");
+  const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : "—");
+  console.log(`\n近 ${days} 天`);
+  console.log(`北極星：有答案的查詢 ${answered}（看到資料不足的頁面 ${thin}，佔 ${pct(thin, answered + thin)}）`);
+  const sv = total("submit_view"), ss = total("submit_start"), sc = total("submit_success");
+  console.log(`投稿漏斗：看到表單 ${sv} → 開始填 ${ss}（${pct(ss, sv)}）→ 完成 ${sc}（${pct(sc, ss)}）`);
+  const ov = total("offer_view"), oc = total("offer_check"), os = total("offer_share_click");
+  console.log(`Offer 檢查器：開啟 ${ov} → 檢查 ${oc}（${pct(oc, ov)}）→ 點分享 ${os}（${pct(os, oc)}）`);
+  console.log(`搜尋：選到公司 ${total("search_select")}，找不到 ${total("search_empty")}；分享圖：分享 ${total("share_click")}、下載 ${total("share_download")}；比較 ${total("compare_used")}`);
+  const rows = sql(`SELECT name, scope, ref, SUM(count) AS n FROM events WHERE day >= ${since} GROUP BY name, scope, ref ORDER BY n DESC LIMIT 40`);
+  console.log("\n明細（前 40）");
+  for (const r of rows) console.log(`  ${r.name.padEnd(18)} ${String(r.scope || "-").padEnd(24)} ${String(r.ref || "直接").padEnd(12)} ${r.n}`);
+  const weekly = sql(
+    `SELECT strftime('%Y-W%W', day) AS w, SUM(CASE WHEN name IN ('answer_view','offer_check') AND scope <> 'none' THEN count ELSE 0 END) AS n FROM events GROUP BY w ORDER BY w DESC LIMIT 8`,
+  );
+  console.log("\n北極星每週");
+  for (const r of weekly) console.log(`  ${r.w}  ${r.n}`);
 } else if (action === "resolve") {
   sql(`UPDATE reports SET status = 'resolved' WHERE id IN (${ids(args)})`);
   console.log(`已結案：${args.join(", ")}`);

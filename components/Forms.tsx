@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ShareCard, type ShareResult } from "@/components/ShareCard";
+import { track } from "@/lib/track";
 
 type Status = { state: "idle" | "sending" | "done" | "error"; message?: string };
 
@@ -81,11 +82,16 @@ async function shareResult(body: Record<string, unknown>): Promise<ShareResult |
 
 type Done = { status: "approved" | "pending"; share: ShareResult | null };
 
+// Handed over by the offer checker through sessionStorage, so salaries never sit in a URL.
+export type OfferPrefill = { company: string; track: string; role: string; yoe: string; monthly: string; bonus: string };
+export const OFFER_PREFILL_KEY = "offerPrefill";
+
 export function SubmitForm() {
   const [status, setStatus] = useState<Status>({ state: "idle" });
   const [done, setDone] = useState<Done | null>(null);
   const [suggestions, setSuggestions] = useState<IndexEntry[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
+  const started = useRef(false);
 
   // Prefill from /submit/?company=mediatek (the company page button) and keep ?ref= for
   // attribution. The page is static, so these are only known in the browser.
@@ -94,6 +100,28 @@ export function SubmitForm() {
     if (!form) return;
     const q = new URLSearchParams(window.location.search);
     const set = (name: string, value: string) => ((form.elements.namedItem(name) as HTMLInputElement).value = value);
+    track("submit_view");
+    const setKind = (kind: string) => {
+      const radio = form.querySelector<HTMLInputElement>(`input[name="kind"][value="${kind}"]`);
+      if (radio) radio.checked = true;
+    };
+    if (q.get("kind") === "offer") setKind("offer");
+    let prefill: OfferPrefill | null = null;
+    try {
+      prefill = JSON.parse(sessionStorage.getItem(OFFER_PREFILL_KEY) ?? "null");
+      sessionStorage.removeItem(OFFER_PREFILL_KEY);
+    } catch {
+      prefill = null;
+    }
+    if (prefill) {
+      setKind("offer");
+      set("company", prefill.company);
+      set("track", prefill.track);
+      set("role", prefill.role);
+      set("yoe", prefill.yoe);
+      set("monthly", prefill.monthly);
+      set("bonus_months", prefill.bonus);
+    }
     let ref = q.get("ref");
     try {
       ref ??= sessionStorage.getItem("ref");
@@ -104,7 +132,7 @@ export function SubmitForm() {
     const slug = q.get("company");
     loadIndex().then((index) => {
       setSuggestions([...index].sort((a, b) => b.c - a.c).slice(0, 400));
-      const hit = slug ? index.find((e) => e.s === slug) : undefined;
+      const hit = slug && !prefill ? index.find((e) => e.s === slug) : undefined;
       if (hit) {
         set("company", hit.n);
         set("track", hit.t);
@@ -145,6 +173,11 @@ export function SubmitForm() {
     <form
       ref={formRef}
       className="relative space-y-5"
+      onFocus={() => {
+        if (started.current) return;
+        started.current = true;
+        track("submit_start");
+      }}
       onSubmit={async (e) => {
         e.preventDefault();
         const form = e.currentTarget;
@@ -155,9 +188,11 @@ export function SubmitForm() {
           const res = await fetch("/api/submissions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
           const data = (await res.json().catch(() => ({}))) as { error?: string; status?: "approved" | "pending" };
           if (!res.ok) {
+            track("submit_error", String(res.status));
             setStatus({ state: "error", message: data.error ?? `送出失敗（${res.status}）` });
             return;
           }
+          track("submit_success", `${data.status ?? "pending"}:${body.kind ?? "current"}`);
           setDone({ status: data.status ?? "pending", share: await shareResult(body) });
         } catch {
           setStatus({ state: "error", message: "網路錯誤，請稍後再試" });
@@ -166,6 +201,18 @@ export function SubmitForm() {
     >
       <Honeypot />
       <input type="hidden" name="ref" />
+      <fieldset className="flex flex-wrap gap-2">
+        <legend className="mb-2 text-sm">要分享的是</legend>
+        {[
+          { v: "current", label: "目前的薪資" },
+          { v: "offer", label: "收到的 offer" },
+        ].map((k) => (
+          <label key={k.v} className="flex cursor-pointer items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-sm has-checked:border-accent has-checked:bg-accent-soft">
+            <input type="radio" name="kind" value={k.v} defaultChecked={k.v === "current"} className="accent-[var(--brand)]" />
+            {k.label}
+          </label>
+        ))}
+      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="產業">
           <select name="track" required className={input} defaultValue="">

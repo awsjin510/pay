@@ -8,7 +8,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { Payslip, type PayslipRow } from "@/components/Payslip";
 import { SectionTabs } from "@/components/SectionTabs";
 import { SubmissionList } from "@/components/SubmissionList";
-import { companies, companyBySlug, describeCompany, INDUSTRY_LABELS, meta, nicknamesOf, SITE_URL, submissions, trackLabel } from "@/lib/data";
+import { confidenceOf, ThinCompany } from "@/components/ThinCompany";
+import { TrackView } from "@/components/TrackView";
+import { companies, companyBySlug, describeCompany, INDUSTRY_LABELS, meta, nicknamesOf, SITE_URL, submissions, trackLabel, tracks } from "@/lib/data";
 
 export const dynamicParams = false;
 
@@ -57,6 +59,15 @@ export default async function CompanyPage({ params }: Props) {
   if (s?.annual) slip.push({ label: "總年薪（中位數）", value: String(s.annual.median), unit: "萬", note: "含分紅，自行回報" });
   if (o) slip.push({ label: `非主管薪資中位數`, value: String(o.median), unit: "萬", official: true, note: `${o.year} 年全年，公開資訊觀測站` });
 
+  // For thin pages: companies in the same 產業別 (or track) that do have statistics.
+  const peers = (pred: (x: (typeof companies)[number]) => boolean) =>
+    companies.filter((x) => x.slug !== c.slug && x.stats?.monthly && pred(x)).sort((a, b) => b.n - a.n).slice(0, 6);
+  const sameIndustry = o?.industry ? peers((x) => x.official?.industry === o.industry) : [];
+  const byIndustry = sameIndustry.length >= 3;
+  const similar = s ? [] : byIndustry ? sameIndustry : peers((x) => x.track === c.track && (!c.sector || x.sector === c.sector));
+  const similarLabel = byIndustry ? "同產業別的上市櫃公司" : `${trackLabel(c.track)}中資料較多的公司`;
+  const confidence = confidenceOf(c);
+
   const sections = [
     ...(s ? [{ id: "distribution", label: "薪資分布" }] : []),
     ...(c.curve.some((p) => p.monthly) ? [{ id: "experience", label: "年資" }] : []),
@@ -65,6 +76,7 @@ export default async function CompanyPage({ params }: Props) {
 
   return (
     <div className="space-y-8">
+      <TrackView name={s ? "answer_view" : "thin_view"} scope={s ? `company:${confidence === "高" ? "high" : "medium"}` : "company"} />
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -102,7 +114,7 @@ export default async function CompanyPage({ params }: Props) {
           <Payslip
             animate
             heading={`${c.name} 薪資條`}
-            sub={`${c.n} 筆分享`}
+            sub={s ? `${c.n} 筆分享，可信度${confidence}` : `${c.n} 筆分享`}
             rows={slip}
             footnote={
               o && s?.annual
@@ -111,9 +123,7 @@ export default async function CompanyPage({ params }: Props) {
             }
           />
         ) : (
-          <div className="rounded-xl border border-dashed border-border p-6 text-ink-2">
-            這間公司只有 {c.n} 筆資料，未達 {meta.minN} 筆，不顯示統計數字，以免誤導或識別出填寫者。下方可看每筆分享。
-          </div>
+          <ThinCompany company={c} similar={similar} similarLabel={similarLabel} track={tracks.find((t) => t.id === c.track)} />
         )}
 
         <div className="flex flex-col gap-4">
@@ -129,7 +139,19 @@ export default async function CompanyPage({ params }: Props) {
             </dl>
           )}
           {s && <YearMix stats={s} />}
+          {!s && slip.length > 0 && <ThinCompany company={c} similar={similar} similarLabel={similarLabel} track={tracks.find((t) => t.id === c.track)} />}
+          {c.offers && (
+            <p className="rounded-xl border border-border bg-surface px-4 py-3 text-sm">
+              近期收到的 offer：{c.offers.n} 筆
+              {c.offers.median != null && <span className="num ml-1 font-semibold">中位數 {c.offers.median} 萬</span>}
+              {c.offers.latest && <span className="ml-1 text-ink-3">（最新 {c.offers.latest}）</span>}
+              <span className="block text-xs text-ink-3">offer 是公司開出的條件，和實領薪資分開統計。</span>
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
+            <Link href={`/offer/?company=${c.slug}`} className="rounded-xl border border-border bg-surface px-3.5 py-2 text-sm hover:border-accent">
+              這間的 offer 合理嗎？
+            </Link>
             <Link href={`/compare/?c=${c.slug}`} className="rounded-xl border border-border bg-surface px-3.5 py-2 text-sm hover:border-accent">
               和其他公司比較
             </Link>
