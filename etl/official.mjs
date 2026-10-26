@@ -7,8 +7,16 @@ const SOURCES = [
   { file: "official_tpex.json", market: "上櫃", url: "https://www.tpex.org.tw/openapi/v1/t187ap46_O_5" },
 ];
 
+// Company basics, only for the 產業別 code (證交所產業分類).
+const BASICS = [
+  { file: "basics_twse.json", url: "https://openapi.twse.com.tw/v1/opendata/t187ap03_L" },
+  { file: "basics_tpex.json", url: "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_O" },
+];
+
+export const INDUSTRY_LABELS = { 30: "資訊服務業", 36: "數位雲端" };
+
 export async function fetchOfficial(rawDir) {
-  for (const s of SOURCES) {
+  for (const s of [...SOURCES, ...BASICS]) {
     const res = await fetch(s.url);
     if (!res.ok) throw new Error(`${s.url}: HTTP ${res.status}`);
     await writeFile(new URL(s.file, rawDir), await res.text());
@@ -27,7 +35,24 @@ const thousandsToWan = (s) => {
   return Number.isFinite(n) && n > 0 ? Math.round(n) / 10 : null;
 };
 
+async function readIndustryCodes(rawDir) {
+  const byCode = new Map();
+  for (const b of BASICS) {
+    try {
+      for (const r of JSON.parse(await readFile(new URL(b.file, rawDir), "utf8"))) {
+        const code = field(r, "公司代號") || String(r.SecuritiesCompanyCode ?? "").trim();
+        const industry = field(r, "產業別") || String(r.SecuritiesIndustryCode ?? "").trim();
+        if (code) byCode.set(code, industry);
+      }
+    } catch {
+      // Missing cache: companies simply get no industry.
+    }
+  }
+  return byCode;
+}
+
 export async function readOfficial(rawDir) {
+  const industries = await readIndustryCodes(rawDir);
   const out = [];
   for (const s of SOURCES) {
     let rows;
@@ -39,10 +64,12 @@ export async function readOfficial(rawDir) {
     for (const r of rows) {
       const median = thousandsToWan(field(r, "非擔任主管", "中位數(仟元"));
       if (median == null) continue;
+      const code = field(r, "公司代號");
       out.push({
-        code: field(r, "公司代號"),
+        code,
         name: field(r, "公司名稱"),
         market: s.market,
+        industry: industries.get(code) ?? null,
         year: Number(field(r, "報告年度")) + 1911,
         median,
         mean: thousandsToWan(field(r, "非擔任主管", "平均數(仟元")),

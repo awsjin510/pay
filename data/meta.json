@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T04:06:52.698Z",
+  "generatedAt": "2026-10-26T04:16:28.919Z",
   "site": "https://pay.operation.tw",
   "sheetId": "1-lMc-QktDGlO05je0zyR7P7QnfuoaECcsGUeKZZy6q0",
   "minN": 3,
@@ -15,6 +15,14 @@
     "year": 2025,
     "companies": 1821,
     "matched": 95
+  },
+  "mol": {
+    "year": 2025,
+    "annualYear": 2024
+  },
+  "itServices": {
+    "listed": 80,
+    "crowdRows": 67
   },
   "years": {
     "2023": 1340,

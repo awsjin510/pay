@@ -14,6 +14,7 @@ const NAV = [
   { href: "/industries/soft/", label: "純軟" },
   { href: "/industries/system/", label: "系統廠" },
   { href: "/industries/ic/", label: "IC 設計" },
+  { href: "/sectors/it-services/", label: "資訊服務" },
   { href: "/sectors/cloud-security/", label: "雲端 / 資安" },
   { href: "/roles/", label: "職務" },
   { href: "/compare/", label: "比較" },

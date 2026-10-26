@@ -30,6 +30,12 @@ export default function AboutPage() {
             <strong>官方揭露</strong>：公開資訊觀測站「非擔任主管職務之全時員工薪資」（證交所、櫃買中心開放資料），{meta.official.year} 年度共 {meta.official.companies.toLocaleString()} 間公司，
             其中 {meta.official.matched} 間對應到本站公司頁。
           </li>
+          {meta.mol && (
+            <li>
+              <strong>勞動部職類別薪資調查</strong>：{meta.mol.year} 年「出版影音及資通訊業（按職類別分）」，用於
+              <Link href="/sectors/it-services/" className="underline">資訊服務業專區</Link>與各職務頁的官方參考（政府資料開放授權條款第 1 版）。
+            </li>
+          )}
         </ul>
         <p className="mt-2">每次網站更新都會重新抓取以上來源。最後更新：{meta.generatedAt.slice(0, 10)}。依填寫年份：</p>
         <ul className="mt-1 list-disc pl-5 text-ink-2">

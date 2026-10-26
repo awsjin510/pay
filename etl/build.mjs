@@ -6,8 +6,9 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseCsv } from "./csv.mjs";
-import { ANONYMOUS_PATTERNS, buildAliasIndex, normalizeKey, sectorFromName } from "./companies.mjs";
-import { fetchOfficial, readOfficial } from "./official.mjs";
+import { ANONYMOUS_PATTERNS, buildAliasIndex, COMPANIES, normalizeKey, sectorFromName } from "./companies.mjs";
+import { fetchMol, occupationReference, readMol, ROLE_TO_OCCUPATION } from "./mol.mjs";
+import { fetchOfficial, INDUSTRY_LABELS, readOfficial } from "./official.mjs";
 import { HARSH, rareTitleFilter, scrubComment } from "./privacy.mjs";
 import { classifyRole, LEVEL_BANDS, levelBand, ROLES, OTHER_ROLE } from "./roles.mjs";
 import { SECTORS, sectorFromRole, subRole, SUB_ROLES } from "./sectors.mjs";
@@ -25,6 +26,8 @@ const WEB_SUBMISSIONS_URL = process.env.WEB_SUBMISSIONS_URL ?? `${SITE}/api/appr
 const MIN_N = 3;
 const RECENT_FROM_YEAR = 2025;
 const TODAY = new Date().toISOString().slice(0, 10);
+
+const COMPANIES_BY_NAME = new Map(COMPANIES.map((c) => [c.name, c]));
 
 const RAW_DIR = new URL("../data/raw/", import.meta.url);
 const OUT_DIR = new URL("../data/", import.meta.url);
@@ -291,6 +294,7 @@ async function main() {
   if (process.argv.includes("--fetch")) {
     await fetchTabs();
     await fetchOfficial(RAW_DIR);
+    await fetchMol(RAW_DIR);
     await fetchWebSubmissions();
   }
   const aliases = buildAliasIndex();
@@ -449,12 +453,15 @@ async function main() {
     };
   });
 
+  const mol = await readMol(RAW_DIR);
+
   const roles = [...ROLES, OTHER_ROLE].map((r) => {
     const rows = submissions.filter((s) => s.role === r.id);
     return {
       id: r.id,
       label: r.label,
       stats: summarize(rows),
+      officialRef: occupationReference(mol, ROLE_TO_OCCUPATION[r.id]),
       monthlyValues: monthlyValues(rows),
       byTrack: TABS.filter((t) => t.track).map((t) => ({ track: t.track, stats: summarize(rows.filter((s) => s.track === t.track)) })),
       topCompanies: companyList
@@ -496,6 +503,33 @@ async function main() {
     };
   });
 
+  // 資訊服務業: listed / OTC companies by 產業別 (30 資訊服務業, 36 數位雲端) with their official
+  // pay, plus our own submissions from those companies and known unlisted ones.
+  const itCodes = new Set(Object.keys(INDUSTRY_LABELS));
+  const slugByOfficialCode = new Map(companyList.filter((c) => c.official).map((c) => [c.official.code, c.slug]));
+  const itCompanySlugs = new Set(
+    companyList.filter((c) => itCodes.has(c.official?.industry) || COMPANIES_BY_NAME.get(c.name)?.itServices).map((c) => c.slug),
+  );
+  const itRows = submissions.filter((s) => itCompanySlugs.has(s.company));
+  const itServices = {
+    mol,
+    listed: official
+      .filter((o) => itCodes.has(o.industry))
+      .map((o) => ({ ...o, industryLabel: INDUSTRY_LABELS[o.industry], slug: slugByOfficialCode.get(o.code) ?? null }))
+      .sort((a, b) => b.median - a.median),
+    crowd: {
+      stats: summarize(itRows),
+      monthlyValues: monthlyValues(itRows),
+      rowIds: itRows.map((s) => s.id),
+      companies: [...itCompanySlugs]
+        .map((slug) => {
+          const c = companyList.find((x) => x.slug === slug);
+          return { slug, name: c.name, n: c.n, stats: c.stats, official: c.official };
+        })
+        .sort((a, b) => b.n - a.n),
+    },
+  };
+
   const companyBySlug = new Map(companyList.map((c) => [c.slug, c]));
   const slugByKnownName = new Map(companyList.filter((c) => c.verified).map((c) => [c.name, c.slug]));
   const slugByRawKey = new Map();
@@ -535,6 +569,8 @@ async function main() {
     namedCompanies: companyList.length,
     anonymousRows: submissions.filter((s) => !s.company).length,
     official: { year: officialYear, companies: official.length, matched: companyList.filter((c) => c.official).length },
+    mol: mol ? { year: mol.year, annualYear: mol.annualYear } : null,
+    itServices: { listed: itServices.listed.length, crowdRows: itRows.length },
     years: Object.fromEntries(
       [...new Set(submissions.map((s) => s.year ?? "unknown"))].sort().map((y) => [y, submissions.filter((s) => (s.year ?? "unknown") === y).length]),
     ),
@@ -550,6 +586,7 @@ async function main() {
   await writeFile(new URL("roles.json", OUT_DIR), JSON.stringify(roles));
   await writeFile(new URL("interviews.json", OUT_DIR), JSON.stringify(interviews));
   await writeFile(new URL("sectors.json", OUT_DIR), JSON.stringify(sectors));
+  await writeFile(new URL("it-services.json", OUT_DIR), JSON.stringify(itServices));
   await writeFile(new URL("meta.json", OUT_DIR), JSON.stringify(meta, null, 2));
 
   // Open data: aggregates only, never individual rows or comments.
@@ -574,6 +611,19 @@ async function main() {
   await writeFile(
     new URL("industries.csv", PUBLIC_DATA_DIR),
     toCsv(tracks, [{ header: "產業", value: (r) => r.label }, ...statColumns]),
+  );
+  await writeFile(
+    new URL("it-services-listed.csv", PUBLIC_DATA_DIR),
+    toCsv(itServices.listed, [
+      { header: "代號", value: (r) => r.code },
+      { header: "公司", value: (r) => r.name },
+      { header: "市場", value: (r) => r.market },
+      { header: "產業別", value: (r) => r.industryLabel },
+      { header: "年度", value: (r) => r.year },
+      { header: "非主管薪資中位數(萬)", value: (r) => r.median },
+      { header: "非主管薪資平均數(萬)", value: (r) => r.mean },
+      { header: "中位數年增", value: (r) => r.medianChange },
+    ]),
   );
 
   console.log(JSON.stringify({ total: meta.total, sources: meta.sources, official: meta.official, flags: meta.flags }, null, 2));

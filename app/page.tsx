@@ -67,6 +67,16 @@ export default function Home() {
           ))}
         </div>
         <Link
+          href="/sectors/it-services/"
+          className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface px-5 py-4 hover:border-accent"
+        >
+          <span>
+            <span className="font-medium">資訊服務業專區</span>
+            <span className="ml-2 text-sm text-ink-2">勞動部各職類薪資＋{meta.itServices.listed} 間上市櫃資訊服務公司官方薪資</span>
+          </span>
+          <span className="text-sm text-accent">前往 →</span>
+        </Link>
+        <Link
           href="/sectors/cloud-security/"
           className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface px-5 py-4 hover:border-accent"
         >

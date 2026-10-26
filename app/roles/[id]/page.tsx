@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { YearMix } from "@/components/DataNotes";
+import { OccupationRef } from "@/components/OccupationRef";
 import { PercentileTool } from "@/components/PercentileTool";
 import { RangeBar } from "@/components/RangeBar";
 import { LevelTable, StatsTiles } from "@/components/StatsOverview";
@@ -48,6 +49,8 @@ export default async function RolePage({ params }: Props) {
         <StatsTiles stats={r.stats} />
         <YearMix stats={r.stats} />
       </div>
+
+      {r.officialRef && <OccupationRef data={r.officialRef} crowdMonthly={r.stats.monthly?.median} />}
 
       <PercentileTool values={r.monthlyValues} scope={r.label} />
 

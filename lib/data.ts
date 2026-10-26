@@ -1,5 +1,6 @@
 import companiesJson from "@/data/companies.json";
 import interviewsJson from "@/data/interviews.json";
+import itServicesJson from "@/data/it-services.json";
 import metaJson from "@/data/meta.json";
 import rolesJson from "@/data/roles.json";
 import sectorsJson from "@/data/sectors.json";
@@ -31,6 +32,8 @@ export type Official = {
   code: string;
   name: string;
   market: string;
+  // 證交所產業別 code, e.g. "30" 資訊服務業, "36" 數位雲端.
+  industry: string | null;
   year: number;
   median: number;
   mean: number | null;
@@ -98,10 +101,32 @@ export type Track = {
   roles: { role: string; stats: Stats }[];
 };
 
+// 勞動部職類別薪資調查: one occupation's numbers across industries.
+export type OccupationRef = {
+  occupation: string;
+  year: number;
+  annualYear: number;
+  rows: { industry: string; employees: number; monthly: number; annual: number | null }[];
+};
+
+export type MolOccupation = { name: string; major: boolean; group: string | null; employees: number; monthly: number; annual: number | null };
+
+export type ItServices = {
+  mol: { year: number; annualYear: number; industries: { code: string; label: string; occupations: MolOccupation[] }[] } | null;
+  listed: (Official & { industryLabel: string; slug: string | null })[];
+  crowd: {
+    stats: Stats | null;
+    monthlyValues: number[];
+    rowIds: string[];
+    companies: { slug: string; name: string; n: number; stats: Stats | null; official: Official | null }[];
+  };
+};
+
 export type Role = {
   id: string;
   label: string;
   stats: Stats | null;
+  officialRef: OccupationRef | null;
   monthlyValues: number[];
   byTrack: { track: TrackId; stats: Stats | null }[];
   topCompanies: { slug: string; name: string; n: number; monthly: Dist | null; annual: Dist | null }[];
@@ -137,6 +162,9 @@ export const tracks = tracksJson as unknown as Track[];
 export const roles = rolesJson as unknown as Role[];
 export const interviews = interviewsJson as unknown as Interview[];
 export const sectors = sectorsJson as unknown as Sector[];
+export const itServices = itServicesJson as unknown as ItServices;
+
+export const INDUSTRY_LABELS: Record<string, string> = { "30": "資訊服務業", "36": "數位雲端" };
 export const meta = metaJson;
 
 export const TRACK_IDS: TrackId[] = ["soft", "system", "ic"];

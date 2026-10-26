@@ -77,7 +77,9 @@ export const COMPANIES = [
   { name: "IBM", en: "IBM", track: "soft", aliases: [] },
   { name: "沛星", en: "Appier", track: "soft", aliases: ["沛星互動", "Appier"] },
   { name: "精誠資訊", en: "Systex", track: "soft", aliases: ["精誠", "Systex", "Systex精誠"] },
-  { name: "昕力資訊", en: "TPIsoftware", track: "soft", aliases: ["昕力"] },
+  // itServices: unlisted 資訊服務業 companies (listed ones are found by their 產業別 code).
+  { name: "昕力資訊", en: "TPIsoftware", track: "soft", itServices: true, aliases: ["昕力"] },
+  { name: "緯創軟體", en: "Wistron ITS", track: "soft", itServices: true, aliases: ["Wistron ITS"] },
   { name: "叡揚資訊", en: "Gss", track: "soft", aliases: ["叡揚"] },
   { name: "訊連科技", en: "CyberLink", track: "soft", aliases: ["訊連", "CyberLink"] },
   { name: "KKCompany", en: "KKCompany", track: "soft", aliases: ["KKBOX"] },
