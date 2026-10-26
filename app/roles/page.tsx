@@ -16,10 +16,10 @@ export default function RolesPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">職務薪資</h1>
+        <h1 className="text-3xl font-black sm:text-4xl">職務薪資</h1>
         <p className="mt-1 text-sm text-ink-2">職務名稱是自由填寫，這裡依關鍵字歸類；只填「工程師」「RD」的歸在「研發（未細分）」。</p>
       </header>
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="text-left text-xs text-ink-2">
             <tr>

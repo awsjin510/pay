@@ -37,7 +37,7 @@ export default function ItServicesPage() {
   return (
     <div className="space-y-10">
       <header>
-        <h1 className="text-2xl font-semibold">資訊服務業薪資</h1>
+        <h1 className="text-3xl font-black sm:text-4xl">資訊服務業薪資</h1>
         <p className="mt-2 text-sm text-ink-2">
           合併三種來源：勞動部{mol?.year}年職類別薪資調查（按職類）、{listed.length} 間上市櫃資訊服務／數位雲端公司的官方非主管薪資，以及本站 {crowd.stats?.n ?? 0} 筆匿名分享。
           定義不同，請對照閱讀（見頁尾說明）。
@@ -57,7 +57,7 @@ export default function ItServicesPage() {
 
       {mol && (
         <section>
-          <h2 className="text-lg font-semibold">各職類薪資（勞動部）</h2>
+          <h2 className="text-xl font-bold">各職類薪資（勞動部）</h2>
           <p className="mt-1 mb-3 text-sm text-ink-2">
             {mol.year} 年 7 月經常性薪資與 {mol.annualYear} 年全年薪資的平均數。「電腦程式設計、諮詢及相關服務業」就是一般說的資訊服務業（SI、軟體外包、IT 顧問）。
           </p>
@@ -66,11 +66,11 @@ export default function ItServicesPage() {
       )}
 
       <section>
-        <h2 className="text-lg font-semibold">上市櫃公司官方薪資</h2>
+        <h2 className="text-xl font-bold">上市櫃公司官方薪資</h2>
         <p className="mt-1 mb-3 text-sm text-ink-2">
           證交所／櫃買中心產業別為「資訊服務業」或「數位雲端」的公司，{listed[0]?.year} 年非擔任主管全時員工薪資（全年，含獎金）。有本站資料的公司可點進去看細節。
         </p>
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full min-w-[600px] text-sm">
             <thead className="text-left text-xs text-ink-2">
               <tr>
@@ -100,7 +100,7 @@ export default function ItServicesPage() {
                   <td className="w-2/5 px-3 py-2">
                     <div className="flex items-center gap-2" title={`${l.name} 非主管薪資中位數 ${l.median} 萬`}>
                       <div className="h-2.5 flex-1 rounded-sm bg-grid/60">
-                        <div className="h-full rounded-sm bg-accent" style={{ width: `${(l.median / listedMax) * 100}%` }} />
+                        <div className="h-full rounded-sm bg-official" style={{ width: `${(l.median / listedMax) * 100}%` }} />
                       </div>
                       <span className="w-16 text-right">{l.median} 萬</span>
                     </div>
@@ -115,8 +115,8 @@ export default function ItServicesPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold">本站分享（資訊服務公司）</h2>
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <h2 className="text-xl font-bold">本站分享（資訊服務公司）</h2>
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="text-left text-xs text-ink-2">
               <tr>

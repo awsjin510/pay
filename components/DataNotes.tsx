@@ -27,7 +27,7 @@ export function OfficialPay({ company }: { company: Company }) {
   if (!o) return null;
   const crowd = company.stats?.annual?.median;
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 text-sm">
+    <div className="rounded-xl border border-border bg-surface p-4 text-sm">
       <div className="text-xs text-ink-2">官方揭露・{o.year} 年非擔任主管全時員工薪資（{o.market} {o.code}）</div>
       <div className="tabular mt-1 flex flex-wrap items-baseline gap-x-6 gap-y-1">
         <span>

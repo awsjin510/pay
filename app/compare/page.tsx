@@ -32,7 +32,7 @@ export default function ComparePage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">公司薪資比較</h1>
+        <h1 className="text-3xl font-black sm:text-4xl">公司薪資比較</h1>
         <p className="mt-1 text-sm text-ink-2">選 2–3 間公司並排比較。網址會記住你的選擇，可以直接分享。</p>
       </header>
       <CompareTool entries={entries} trackLabels={meta.trackLabels} />

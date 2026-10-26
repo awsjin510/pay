@@ -30,7 +30,7 @@ export default function CloudSecurityPage() {
   return (
     <div className="space-y-10">
       <header>
-        <h1 className="text-2xl font-semibold">雲端 / 資安薪資</h1>
+        <h1 className="text-3xl font-black sm:text-4xl">雲端 / 資安薪資</h1>
         <p className="mt-2 text-sm text-ink-2">
           從三個分頁中挑出 DevOps、SRE、雲端與資安相關職稱，以及資安、雲端公司的所有分享，共 {rows.length} 筆。
           樣本仍小，數字請當作參考區間，不是行情定價。
@@ -38,8 +38,8 @@ export default function CloudSecurityPage() {
       </header>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">總覽</h2>
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <h2 className="mb-3 text-xl font-bold">總覽</h2>
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full min-w-[600px] text-sm">
             <thead className="text-left text-xs text-ink-2">
               <tr>
@@ -73,8 +73,8 @@ export default function CloudSecurityPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">細分職務</h2>
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <h2 className="mb-3 text-xl font-bold">細分職務</h2>
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="text-left text-xs text-ink-2">
               <tr>
@@ -126,8 +126,8 @@ export default function CloudSecurityPage() {
           (g) =>
             g.stats && (
               <div key={g.label}>
-                <h2 className="mb-3 text-lg font-semibold">{g.label}・依年資</h2>
-                <div className="rounded-lg border border-border bg-surface p-4">
+                <h2 className="mb-3 text-xl font-bold">{g.label}・依年資</h2>
+                <div className="rounded-xl border border-border bg-surface p-4">
                   <LevelTable stats={g.stats} />
                 </div>
               </div>
@@ -138,8 +138,8 @@ export default function CloudSecurityPage() {
       <section className="grid gap-6 lg:grid-cols-2">
         {[security, cloud].map((sec) => (
           <div key={sec.id}>
-            <h2 className="mb-3 text-lg font-semibold">{sec.label}・公司</h2>
-            <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <h2 className="mb-3 text-xl font-bold">{sec.label}・公司</h2>
+            <div className="overflow-x-auto rounded-xl border border-border bg-surface">
               <table className="w-full text-sm">
                 <tbody className="tabular">
                   {sec.companies.map((c) => (
@@ -168,7 +168,7 @@ export default function CloudSecurityPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold">面試心得（{interviews.length}）</h2>
+        <h2 className="text-xl font-bold">面試心得（{interviews.length}）</h2>
         <p className="mt-1 mb-3 text-sm text-ink-2">
           以 DevOps / SRE 職缺為主。{offers.length} 間錄取，有寫薪資的 offer：
           {offers
@@ -179,7 +179,7 @@ export default function CloudSecurityPage() {
         </p>
         <ul className="space-y-3">
           {interviews.map((i) => (
-            <li key={i.id} className="rounded-lg border border-border bg-surface p-4">
+            <li key={i.id} className="rounded-xl border border-border bg-surface p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div>
                   {i.companySlug ? (
@@ -205,7 +205,7 @@ export default function CloudSecurityPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">每筆分享</h2>
+        <h2 className="mb-3 text-xl font-bold">每筆分享</h2>
         <SubmissionList
           rows={rows}
           recentFromYear={meta.recentFromYear}

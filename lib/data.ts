@@ -11,6 +11,8 @@ export type TrackId = "soft" | "system" | "ic";
 
 export type Dist = { n: number; p25: number; median: number; p75: number };
 
+export type CurvePoint = { label: string; n: number; monthly: Dist | null };
+
 export type LevelStats = { level: string; n: number; monthly: Dist | null; annual: Dist | null };
 
 export type Stats = {
@@ -56,6 +58,7 @@ export type Company = {
   stats: Stats | null;
   recentStats: Stats | null;
   monthlyValues: number[];
+  curve: CurvePoint[];
 };
 
 export type Submission = {
@@ -98,6 +101,7 @@ export type Track = {
   stats: Stats | null;
   recentStats: Stats | null;
   monthlyValues: number[];
+  curve: CurvePoint[];
   roles: { role: string; stats: Stats }[];
 };
 
@@ -128,6 +132,7 @@ export type Role = {
   stats: Stats | null;
   officialRef: OccupationRef | null;
   monthlyValues: number[];
+  curve: CurvePoint[];
   byTrack: { track: TrackId; stats: Stats | null }[];
   topCompanies: { slug: string; name: string; n: number; monthly: Dist | null; annual: Dist | null }[];
 };

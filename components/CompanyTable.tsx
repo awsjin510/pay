@@ -54,7 +54,7 @@ export function CompanyTable({ companies, recentFromYear }: { companies: Company
           </button>
         ))}
       </div>
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
         <table className="w-full min-w-[560px] text-sm">
           <thead className="text-left text-xs text-ink-2">
             <tr>

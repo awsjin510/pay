@@ -1,67 +1,191 @@
 @import "tailwindcss";
 
-/* Surfaces and the single data hue come from the dataviz reference palette;
-   dark values are their own steps, not an inversion. */
+/* Ink on cool paper, like a bank payslip. Brand blue is the NT$1000 note; seal red only
+   ever marks official (官方) figures. Chart colors are the validated dataviz pair. */
 :root {
   color-scheme: light;
-  --background: #f6f6f4;
-  --surface: #fcfcfb;
-  --border: #e4e3df;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #77766f;
-  --accent: #2a78d6;
-  --accent-soft: #2a78d640;
-  --grid: #e4e3df;
+  --paper: #f3f5f7;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --line: #d9dfe7;
+  --ink: #14213d;
+  --ink-2: #44546c;
+  --ink-3: #5f6e84;
+  --brand: #1f4e8c;
+  --brand-ink: #ffffff;
+  --brand-soft: #e3ecf8;
+  --seal: #c2362f;
+  --data: #2a78d6;
+  --data-soft: #2a78d633;
+  --official: #eb6834;
+  --grid: #e4e8ee;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --background: #111110;
-    --surface: #1a1a19;
-    --border: #2e2e2c;
-    --text-primary: #f0efec;
-    --text-secondary: #c3c2b7;
-    --text-muted: #96958c;
-    --accent: #3987e5;
-    --accent-soft: #3987e550;
-    --grid: #2e2e2c;
+    --paper: #0f1726;
+    --surface: #16213a;
+    --surface-2: #1c2945;
+    --line: #2a3a5c;
+    --ink: #e6ecf5;
+    --ink-2: #b3c0d3;
+    --ink-3: #93a2b9;
+    --brand: #8ab8f7;
+    --brand-ink: #0f1726;
+    --brand-soft: #1f3358;
+    --seal: #ec7a72;
+    --data: #3987e5;
+    --data-soft: #3987e540;
+    --official: #d95926;
+    --grid: #263552;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #111110;
-  --surface: #1a1a19;
-  --border: #2e2e2c;
-  --text-primary: #f0efec;
-  --text-secondary: #c3c2b7;
-  --text-muted: #96958c;
-  --accent: #3987e5;
-  --accent-soft: #3987e550;
-  --grid: #2e2e2c;
+  --paper: #0f1726;
+  --surface: #16213a;
+  --surface-2: #1c2945;
+  --line: #2a3a5c;
+  --ink: #e6ecf5;
+  --ink-2: #b3c0d3;
+  --ink-3: #93a2b9;
+  --brand: #8ab8f7;
+  --brand-ink: #0f1726;
+  --brand-soft: #1f3358;
+  --seal: #ec7a72;
+  --data: #3987e5;
+  --data-soft: #3987e540;
+  --official: #d95926;
+  --grid: #263552;
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-background: var(--paper);
   --color-surface: var(--surface);
-  --color-border: var(--border);
-  --color-ink: var(--text-primary);
-  --color-ink-2: var(--text-secondary);
-  --color-ink-3: var(--text-muted);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--brand);
+  --color-accent-ink: var(--brand-ink);
+  --color-accent-soft: var(--brand-soft);
+  --color-seal: var(--seal);
+  --color-data: var(--data);
+  --color-data-soft: var(--data-soft);
+  --color-official: var(--official);
   --color-grid: var(--grid);
-  --font-sans: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-sans: var(--font-noto), "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-num: var(--font-barlow), var(--font-noto), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--text-primary);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
 
-.tabular {
+h1,
+h2,
+h3 {
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+/* Numbers: condensed, tabular, so columns of salaries line up like a payslip. */
+.tabular,
+.num {
+  font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+/* Payslip paper: a torn/perforated top and bottom edge. */
+.payslip-shadow {
+  filter: drop-shadow(0 1px 1px rgb(20 33 61 / 0.1)) drop-shadow(0 10px 22px rgb(20 33 61 / 0.1));
+}
+:root[data-theme="dark"] .payslip-shadow {
+  filter: drop-shadow(0 10px 24px rgb(0 0 0 / 0.45));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .payslip-shadow {
+    filter: drop-shadow(0 10px 24px rgb(0 0 0 / 0.45));
+  }
+}
+
+.payslip {
+  --tooth: 10px;
+  background: var(--surface);
+  -webkit-mask:
+    radial-gradient(circle at 50% 0, transparent calc(var(--tooth) / 2), #000 calc(var(--tooth) / 2 + 0.5px)) top / var(--tooth) var(--tooth) repeat-x,
+    radial-gradient(circle at 50% 100%, transparent calc(var(--tooth) / 2), #000 calc(var(--tooth) / 2 + 0.5px)) bottom / var(--tooth) var(--tooth) repeat-x,
+    linear-gradient(#000, #000) center / 100% calc(100% - var(--tooth)) no-repeat;
+  mask:
+    radial-gradient(circle at 50% 0, transparent calc(var(--tooth) / 2), #000 calc(var(--tooth) / 2 + 0.5px)) top / var(--tooth) var(--tooth) repeat-x,
+    radial-gradient(circle at 50% 100%, transparent calc(var(--tooth) / 2), #000 calc(var(--tooth) / 2 + 0.5px)) bottom / var(--tooth) var(--tooth) repeat-x,
+    linear-gradient(#000, #000) center / 100% calc(100% - var(--tooth)) no-repeat;
+}
+
+/* Dot leaders between a payslip item and its amount. */
+.leader {
+  flex: 1;
+  min-width: 1.5rem;
+  margin: 0 0.5rem;
+  border-bottom: 2px dotted color-mix(in oklab, var(--ink) 28%, transparent);
+  transform: translateY(-0.35em);
+}
+
+/* The one orchestrated moment: payslip rows print in once. */
+@keyframes print-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+.print-row {
+  animation: print-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 110ms + 150ms);
+}
+
+/* Official figures carry a seal-style stamp. */
+.seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--seal);
+  color: var(--seal);
+  border-radius: 6px;
+  padding: 0 0.35em;
+  font-weight: 700;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  transform: rotate(-6deg);
+  letter-spacing: 0.1em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .print-row {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -43,6 +43,22 @@ async function fetchTabs() {
   }
 }
 
+// Social share images (app/**/opengraph-image.tsx) need a font with CJK glyphs.
+const OG_FONT_URL = "https://github.com/notofonts/noto-cjk/raw/main/Sans/SubsetOTF/TC/NotoSansTC-Bold.otf";
+async function fetchOgFont() {
+  const file = new URL("NotoSansTC-Bold.otf", RAW_DIR);
+  try {
+    await readFile(file);
+    return;
+  } catch {
+    // not cached yet
+  }
+  const res = await fetch(OG_FONT_URL);
+  if (!res.ok) throw new Error(`OG font: HTTP ${res.status}`);
+  await writeFile(file, Buffer.from(await res.arrayBuffer()));
+  console.log("fetched OG font");
+}
+
 // The site's own API may not exist yet (first deploy) or be down; keep the last cache then.
 async function fetchWebSubmissions() {
   try {
@@ -177,6 +193,20 @@ const monthlyValues = (rows) =>
     .map((r) => round(r.monthly, 1))
     .sort((a, b) => a - b);
 
+// Salary by years of experience, finer than LEVEL_BANDS, for the experience curve chart.
+const YOE_BUCKETS = [
+  [0, 1, "0"], [1, 2, "1"], [2, 3, "2"], [3, 4, "3"], [4, 5, "4"],
+  [5, 7, "5–6"], [7, 10, "7–9"], [10, 15, "10–14"], [15, 51, "15+"],
+];
+
+function yoeCurve(rows) {
+  const pay = rows.filter((r) => !isOutlier(r) && r.yoe != null);
+  return YOE_BUCKETS.map(([lo, hi, label]) => {
+    const sub = pay.filter((r) => r.yoe >= lo && r.yoe < hi);
+    return { label, n: sub.length, monthly: dist(sub.map((r) => r.monthly), 1) };
+  });
+}
+
 function yearMix(rows) {
   const out = {};
   for (const r of rows) out[r.year ?? "unknown"] = (out[r.year ?? "unknown"] ?? 0) + 1;
@@ -296,6 +326,7 @@ async function main() {
     await fetchOfficial(RAW_DIR);
     await fetchMol(RAW_DIR);
     await fetchWebSubmissions();
+    await fetchOgFont();
   }
   const aliases = buildAliasIndex();
   const takedowns = JSON.parse(await readFile(new URL("./takedowns.json", import.meta.url), "utf8"));
@@ -434,6 +465,7 @@ async function main() {
       stats,
       recentStats: summarize(c.rows.filter((r) => r.year >= RECENT_FROM_YEAR)),
       monthlyValues: stats ? monthlyValues(c.rows) : [],
+      curve: stats ? yoeCurve(c.rows) : [],
     });
   }
   for (const s of submissions) delete s.companyKey;
@@ -447,6 +479,7 @@ async function main() {
       stats: summarize(rows),
       recentStats: summarize(rows.filter((s) => s.year >= RECENT_FROM_YEAR)),
       monthlyValues: monthlyValues(rows),
+      curve: yoeCurve(rows),
       roles: [...ROLES, OTHER_ROLE]
         .map((r) => ({ role: r.id, stats: summarize(rows.filter((s) => s.role === r.id)) }))
         .filter((r) => r.stats),
@@ -463,6 +496,7 @@ async function main() {
       stats: summarize(rows),
       officialRef: occupationReference(mol, ROLE_TO_OCCUPATION[r.id]),
       monthlyValues: monthlyValues(rows),
+      curve: yoeCurve(rows),
       byTrack: TABS.filter((t) => t.track).map((t) => ({ track: t.track, stats: summarize(rows.filter((s) => s.track === t.track)) })),
       topCompanies: companyList
         .map((c) => ({ slug: c.slug, name: c.name, stats: summarize(rows.filter((s) => s.company === c.slug)) }))
@@ -588,6 +622,14 @@ async function main() {
   await writeFile(new URL("sectors.json", OUT_DIR), JSON.stringify(sectors));
   await writeFile(new URL("it-services.json", OUT_DIR), JSON.stringify(itServices));
   await writeFile(new URL("meta.json", OUT_DIR), JSON.stringify(meta, null, 2));
+
+  // Global search (Ctrl+K) loads this on demand instead of inlining 700+ companies in every page.
+  await writeFile(
+    new URL("../public/search-index.json", import.meta.url),
+    JSON.stringify(
+      companyList.map((c) => ({ s: c.slug, n: c.name, e: c.en, a: c.aliases, t: c.track, c: c.n, m: c.stats?.monthly?.median ?? null })),
+    ),
+  );
 
   // Open data: aggregates only, never individual rows or comments.
   await writeFile(

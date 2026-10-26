@@ -12,7 +12,7 @@ export function PercentileTool({ values, scope }: { values: number[]; scope: str
   const pct = valid ? Math.round((below / values.length) * 100) : null;
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-xl border border-border bg-surface p-4">
       <label className="flex flex-wrap items-center gap-2 text-sm">
         <span>我的月底薪</span>
         <input

@@ -75,11 +75,11 @@ export function CompareTool({ entries, trackLabels }: { entries: CompareEntry[];
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={`加入公司（最多 ${MAX} 間），例如：聯發科、螃蟹`}
-            className="w-full rounded-lg border border-border bg-surface px-4 py-3 outline-none focus:border-accent"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none focus:border-accent"
             aria-label="加入比較的公司"
           />
           {matches.length > 0 && (
-            <ul className="mt-2 divide-y divide-border rounded-lg border border-border bg-surface">
+            <ul className="mt-2 divide-y divide-border rounded-xl border border-border bg-surface">
               {matches.map((m) => (
                 <li key={m.slug}>
                   <button
@@ -99,7 +99,7 @@ export function CompareTool({ entries, trackLabels }: { entries: CompareEntry[];
         </div>
       )}
       {chosen.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr>

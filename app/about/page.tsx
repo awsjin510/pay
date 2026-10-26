@@ -15,10 +15,10 @@ export default function AboutPage() {
 
   return (
     <article className="max-w-3xl space-y-8 text-sm leading-7">
-      <h1 className="text-2xl font-semibold">資料說明與開放資料</h1>
+      <h1 className="text-3xl font-black sm:text-4xl">資料說明與開放資料</h1>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">資料來源</h2>
+        <h2 className="mb-2 text-xl font-bold">資料來源</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <strong>原始表單</strong>：網友匿名填寫的「薪資紀錄」Google 試算表（純軟、系統廠、IC 設計三個分頁），{meta.sources.sheet.toLocaleString()} 筆，已取得授權整理公開。
@@ -49,7 +49,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">可信度標示</h2>
+        <h2 className="mb-2 text-xl font-bold">可信度標示</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <strong>原始表單・未驗證</strong>：群眾自填，未經本站查證。
@@ -65,7 +65,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">清理規則</h2>
+        <h2 className="mb-2 text-xl font-bold">清理規則</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>月底薪單位統一為「萬」：填成元的 {f("monthly_unit_yuan")} 筆除以 10,000；介於 50–200 的 {f("monthly_unit_guess_k")} 筆視為千元除以 10；仍不合理的 {f("monthly_invalid")} 筆不採計。</li>
           <li>總年薪填成元的 {f("annual_unit_yuan")} 筆換算為萬；不合理的 {f("annual_invalid")} 筆不採計。未填總年薪但有月薪與 Bonus 的 {f("annual_estimated")} 筆，以「月薪 ×（12 + Bonus）」估算並標示「≈」。</li>
@@ -76,7 +76,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">去識別化</h2>
+        <h2 className="mb-2 text-xl font-bold">去識別化</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>全站只出現一次的職稱或職級（{f("rare_title_merged")} 筆）改顯示職務分類，避免從罕見職稱認出投稿者。</li>
           <li>心得中的「姓氏＋職稱」（例如某董、某經理）、email、電話會自動遮蔽。</li>
@@ -86,7 +86,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">下架政策</h2>
+        <h2 className="mb-2 text-xl font-bold">下架政策</h2>
         <p>
           公司、當事人或投稿者都可以透過<Link href="/report/" className="underline">下架申請表</Link>提出，不需登入，7 個工作天內處理。
           具名指控、未經證實的違法情事、可識別個人的內容，確認後直接下架；每筆分享下方也有「回報這筆資料」。
@@ -95,7 +95,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">公司名稱與 PTT 代號</h2>
+        <h2 className="mb-2 text-xl font-bold">公司名稱與 PTT 代號</h2>
         <p>
           同一間公司常有多種寫法與代號，例如「MTK／M／發哥」都是聯發科。代號經 PTT Stock「公司綽號」整理文、工商時報外號盤點等來源交叉比對，
           無法確認的（寶寶、三角、小W）不併入任何公司；完整列表見<Link href="/nicknames/" className="underline">代號對照表</Link>（{nicknamed.length} 間）。
@@ -104,7 +104,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">開放資料</h2>
+        <h2 className="mb-2 text-xl font-bold">開放資料</h2>
         <p>彙總統計以 CC BY 4.0 授權開放下載（不含逐筆資料與心得），引用時請註明「科技業薪資參考 pay.operation.tw」：</p>
         <ul className="mt-1 list-disc pl-5">
           <li>
@@ -120,7 +120,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">營運原則</h2>
+        <h2 className="mb-2 text-xl font-bold">營運原則</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>核心資料永久免費，不做「分享才解鎖」或付費牆。</li>
           <li>不接受任何形式的付費修改、隱藏或置頂數字；公司只能透過下架政策提出申請，標準與一般申請相同。</li>

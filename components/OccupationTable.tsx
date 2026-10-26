@@ -26,7 +26,7 @@ export function OccupationTable({ industries, annualYear }: { industries: Indust
           </button>
         ))}
       </div>
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
         <table className="w-full min-w-[600px] text-sm">
           <thead className="text-left text-xs text-ink-2">
             <tr>
@@ -43,7 +43,7 @@ export function OccupationTable({ industries, annualYear }: { industries: Indust
                 <td className="w-2/5 px-3 py-2">
                   <div className="flex items-center gap-2" title={`${o.name}：月經常性薪資 ${o.monthly} 萬`}>
                     <div className="h-2.5 flex-1 rounded-sm bg-grid/60">
-                      <div className="h-full rounded-sm bg-accent" style={{ width: `${Math.min(100, (o.monthly / max) * 100)}%` }} />
+                      <div className="h-full rounded-sm bg-official" style={{ width: `${Math.min(100, (o.monthly / max) * 100)}%` }} />
                     </div>
                     <span className="w-14 text-right">{o.monthly.toFixed(1)} 萬</span>
                   </div>

@@ -1,0 +1,5 @@
+# Generated share images have no file extension; serve them as PNG.
+/opengraph-image
+  Content-Type: image/png
+/companies/*/opengraph-image
+  Content-Type: image/png

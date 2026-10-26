@@ -14,12 +14,12 @@ export default function NicknamesPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">PTT 科技公司代號對照表</h1>
+        <h1 className="text-3xl font-black sm:text-4xl">PTT 科技公司代號對照表</h1>
         <p className="mt-1 text-sm text-ink-2">
           代號經 PTT Stock「公司綽號」整理文、工商時報外號盤點等來源交叉比對；無法確認的（寶寶、三角、小W 等）不列入。
         </p>
       </header>
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
         <table className="w-full min-w-[480px] text-sm">
           <thead className="text-left text-xs text-ink-2">
             <tr>

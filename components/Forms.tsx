@@ -126,7 +126,7 @@ export function SubmitForm() {
         <input type="checkbox" name="agree" required className="mt-1" />
         <span>我確認內容為本人真實經驗，並同意下方的投稿規範與以 CC BY 4.0 彙總公開。</span>
       </label>
-      <button disabled={status.state === "sending"} className="rounded bg-accent px-5 py-2 text-sm font-medium text-white disabled:opacity-60">
+      <button disabled={status.state === "sending"} className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-ink disabled:opacity-60">
         {status.state === "sending" ? "送出中…" : "送出投稿"}
       </button>
       <Result status={status} done="" />
@@ -186,7 +186,7 @@ export function ReportForm() {
       <Field label="聯絡方式（選填）" hint="email 或其他，只用於回覆這次申請，不會公開">
         <input name="contact" maxLength={120} className={input} />
       </Field>
-      <button disabled={status.state === "sending"} className="rounded bg-accent px-5 py-2 text-sm font-medium text-white disabled:opacity-60">
+      <button disabled={status.state === "sending"} className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-ink disabled:opacity-60">
         {status.state === "sending" ? "送出中…" : "送出"}
       </button>
       <Result status={status} done="" />

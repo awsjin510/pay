@@ -8,7 +8,7 @@ export function OccupationRef({ data, crowdMonthly }: { data: Ref; crowdMonthly?
   const rows = data.rows.filter((r) => SHOWN.includes(r.industry)).sort((a, b) => SHOWN.indexOf(a.industry) - SHOWN.indexOf(b.industry));
   if (!rows.length) return null;
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 text-sm">
+    <div className="rounded-xl border border-border bg-surface p-4 text-sm">
       <div className="text-xs text-ink-2">
         官方參考・勞動部 {data.year} 年職類別薪資調查：{data.occupation}
       </div>

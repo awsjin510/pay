@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { YearMix } from "@/components/DataNotes";
+import { ExperienceCurve } from "@/components/charts/ExperienceCurve";
+import { SalaryDistribution } from "@/components/charts/SalaryDistribution";
 import { OccupationRef } from "@/components/OccupationRef";
-import { PercentileTool } from "@/components/PercentileTool";
 import { RangeBar } from "@/components/RangeBar";
-import { LevelTable, StatsTiles } from "@/components/StatsOverview";
-import { fmtWan, roles, trackLabel } from "@/lib/data";
+import { StatsHero } from "@/components/StatsHero";
+import { fmtWan, meta, roles, trackLabel } from "@/lib/data";
 
 export const dynamicParams = false;
 
@@ -34,29 +34,39 @@ export default async function RolePage({ params }: Props) {
   const byTrack = r.byTrack.filter((t) => t.stats);
   const max = Math.max(...byTrack.map((t) => t.stats!.monthly?.p75 ?? 0), ...r.topCompanies.map((c) => c.monthly?.p75 ?? 0), 1) * 1.05;
 
+  // The 勞動部 figure for the matching occupation in 電腦程式設計業 goes on the payslip itself.
+  const ref = r.officialRef?.rows.find((x) => x.industry === "電腦程式設計、諮詢及相關服務業") ?? r.officialRef?.rows[0];
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <header>
-        <div className="text-sm text-ink-2">
+        <nav className="text-sm text-ink-2" aria-label="麵包屑">
           <Link href="/roles/" className="hover:text-ink">
             職務
           </Link>
-        </div>
-        <h1 className="mt-1 text-2xl font-semibold">{r.label}</h1>
+        </nav>
+        <h1 className="mt-1 text-3xl font-black sm:text-4xl">{r.label}薪資</h1>
       </header>
 
-      <div className="space-y-2">
-        <StatsTiles stats={r.stats} />
-        <YearMix stats={r.stats} />
-      </div>
+      <StatsHero
+        heading={`${r.label} 薪資條`}
+        stats={r.stats}
+        recentFromYear={meta.recentFromYear}
+        extraRows={
+          ref
+            ? [{ label: "勞動部月經常性薪資", value: ref.monthly.toFixed(1), unit: "萬", official: true, note: `${r.officialRef!.year} 年・${ref.industry}・平均數` }]
+            : []
+        }
+      />
 
       {r.officialRef && <OccupationRef data={r.officialRef} crowdMonthly={r.stats.monthly?.median} />}
 
-      <PercentileTool values={r.monthlyValues} scope={r.label} />
+      <SalaryDistribution values={r.monthlyValues} scope={r.label} />
+      <ExperienceCurve points={r.curve} title={`${r.label}：年資與月底薪`} />
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">依產業</h2>
-        <div className="rounded-lg border border-border bg-surface p-4">
+        <h2 className="mb-3 text-xl font-bold">依產業</h2>
+        <div className="rounded-xl border border-border bg-surface p-4">
           <table className="w-full text-sm">
             <tbody className="tabular">
               {byTrack.map((t) => (
@@ -75,17 +85,10 @@ export default async function RolePage({ params }: Props) {
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">依年資</h2>
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <LevelTable stats={r.stats} />
-        </div>
-      </section>
-
       {r.topCompanies.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold">月底薪中位數最高的公司</h2>
-          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+          <h2 className="mb-3 text-xl font-bold">月底薪中位數最高的公司</h2>
+          <div className="overflow-x-auto rounded-xl border border-border bg-surface">
             <table className="w-full min-w-[480px] text-sm">
               <tbody className="tabular">
                 {r.topCompanies.map((c) => (
