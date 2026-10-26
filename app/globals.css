@@ -18,6 +18,8 @@
   --data: #2a78d6;
   --data-soft: #2a78d633;
   --official: #eb6834;
+  --official-text: #a8431a;
+  --data-text: #1f63b8;
   --grid: #e4e8ee;
 }
 
@@ -38,6 +40,8 @@
     --data: #3987e5;
     --data-soft: #3987e540;
     --official: #d95926;
+    --official-text: #f39a6f;
+    --data-text: #7fb3f2;
     --grid: #263552;
   }
 }
@@ -58,6 +62,8 @@
   --data: #3987e5;
   --data-soft: #3987e540;
   --official: #d95926;
+  --official-text: #f39a6f;
+  --data-text: #7fb3f2;
   --grid: #263552;
 }
 
@@ -76,6 +82,9 @@
   --color-data: var(--data);
   --color-data-soft: var(--data-soft);
   --color-official: var(--official);
+  /* Text-safe variants (WCAG AA ≥ 4.5:1); the plain ones are for chart marks only. */
+  --color-official-text: var(--official-text);
+  --color-data-text: var(--data-text);
   --color-grid: var(--grid);
   --font-sans: var(--font-noto), "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   --font-num: var(--font-barlow), var(--font-noto), system-ui, sans-serif;

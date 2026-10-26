@@ -20,7 +20,7 @@ export function OccupationTable({ industries, annualYear }: { industries: Indust
             role="tab"
             aria-selected={i.code === ind.code}
             onClick={() => setCode(i.code)}
-            className={`rounded-full border px-3 py-0.5 ${i.code === ind.code ? "border-accent text-ink" : "border-border text-ink-2 hover:text-ink"}`}
+            className={`min-h-11 rounded-full border px-3 py-0.5 sm:min-h-0 ${i.code === ind.code ? "border-accent text-ink" : "border-border text-ink-2 hover:text-ink"}`}
           >
             {i.label}
           </button>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OFFER_PREFILL_KEY, type OfferPrefill } from "@/components/Forms";
 import { Payslip } from "@/components/Payslip";
+import { toWan, WanInput } from "@/components/WanInput";
 import { track } from "@/lib/track";
 
 type IndexEntry = { s: string; n: string; e: string | null; a: string[]; t: string; c: number };
@@ -100,6 +101,7 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
   const [result, setResult] = useState<Result | null | "none">(null);
   const [last, setLast] = useState<OfferPrefill | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const suggestions = useMemo(() => (data ? [...data[1]].sort((a, b) => b.c - a.c).slice(0, 400) : []), [data]);
   const roleOptions = Object.entries(roleLabels).filter(([id]) => id !== "other");
 
@@ -116,6 +118,20 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
       }
     });
   }, []);
+
+  // On a phone the result renders below the form; bring it into view and move focus to it.
+  useEffect(() => {
+    if (result === null || !resultRef.current) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resultRef.current.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    resultRef.current.focus({ preventScroll: true });
+  }, [result]);
+
+  const editField = (name: string) => {
+    const el = formRef.current?.elements.namedItem(name) as HTMLElement | null;
+    el?.scrollIntoView({ block: "center" });
+    el?.focus();
+  };
 
   const shareOffer = () => {
     if (!last) return;
@@ -138,10 +154,12 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
           if (!data) return;
           const fd = new FormData(e.currentTarget);
           const get = (k: string) => String(fd.get(k) ?? "").trim();
-          const f = { company: get("company"), track: get("track"), role: get("role"), yoe: Number(get("yoe")), monthly: Number(get("monthly")), bonus: get("bonus") ? Number(get("bonus")) : null };
+          const monthly = toWan(get("monthly")).value;
+          (e.currentTarget.elements.namedItem("monthly") as HTMLInputElement).value = monthly;
+          const f = { company: get("company"), track: get("track"), role: get("role"), yoe: Number(get("yoe")), monthly: Number(monthly), bonus: get("bonus") ? Number(get("bonus")) : null };
           const r = evaluate(data[0], data[1], f);
           setResult(r ?? "none");
-          setLast({ company: f.company, track: f.track, role: roleLabels[f.role] ?? "", yoe: get("yoe"), monthly: get("monthly"), bonus: get("bonus") });
+          setLast({ company: f.company, track: f.track, role: roleLabels[f.role] ?? "", yoe: get("yoe"), monthly, bonus: get("bonus") });
           track("offer_check", r ? `${r.level.id}:${r.confidence}` : "none");
         }}
       >
@@ -181,15 +199,15 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
           </label>
           <label className="block text-sm">
             <span className="mb-1 block">相關年資（年）</span>
-            <input name="yoe" type="number" required min={0} max={50} step={0.5} className={input} />
+            <input name="yoe" type="number" inputMode="decimal" required min={0} max={50} step={0.5} className={input} />
           </label>
           <label className="block text-sm">
             <span className="mb-1 block">offer 月底薪（萬）</span>
-            <input name="monthly" type="number" required min={2} max={80} step={0.1} className={input} />
+            <WanInput name="monthly" className={input} />
           </label>
           <label className="block text-sm sm:col-span-2">
             <span className="mb-1 block">保障年終＋獎金（幾個月，選填）</span>
-            <input name="bonus" type="number" min={0} max={60} step={0.1} className={input} />
+            <input name="bonus" type="number" inputMode="decimal" min={0} max={60} step={0.1} className={input} />
           </label>
         </div>
         <button disabled={!data} className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-accent-ink disabled:opacity-60">
@@ -198,7 +216,17 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
         <p className="text-xs text-ink-3">比對在你的瀏覽器裡完成，輸入的數字不會送出或記錄。</p>
       </form>
 
-      <div aria-live="polite">
+      <div ref={resultRef} tabIndex={-1} aria-live="polite" className="scroll-mt-20 outline-none">
+        {result !== null && last && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm">
+            <span>
+              {last.company}，年資 {last.yoe} 年，月薪 {last.monthly} 萬{last.role ? `，${last.role}` : ""}
+            </span>
+            <button type="button" onClick={() => editField("company")} className="min-h-11 px-2 text-accent underline sm:min-h-0">
+              修改
+            </button>
+          </div>
+        )}
         {result === null && (
           <div className="rounded-xl border border-dashed border-border p-6 text-ink-2">
             輸入 offer 後，這裡會顯示它在同公司、同職務、相近年資的人裡算偏低、合理還是偏高，並告訴你這個結論有多可信。
@@ -218,7 +246,7 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
               heading={
                 <span className="flex items-center gap-3">
                   這個 offer
-                  <span className={`rounded-full px-3 py-0.5 text-base ${result.verdict === "low" ? "bg-official/15 text-official" : result.verdict === "high" ? "bg-data/15 text-data" : "bg-surface-2 text-ink"}`}>
+                  <span className={`rounded-full px-3 py-0.5 text-base ${result.verdict === "low" ? "bg-official/15 text-official-text" : result.verdict === "high" ? "bg-data/15 text-data-text" : "bg-surface-2 text-ink"}`}>
                     {VERDICT[result.verdict]}
                   </span>
                 </span>
@@ -234,6 +262,14 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
                 result.confidence === "low" ? "這間公司或這個職務的資料不夠，改用產業整體比對，僅供粗略參考。" : result.confidence === "medium" ? "資料筆數不多，請搭配其他來源判斷。" : ""
               }${!result.companyName ? "找不到這間公司的資料，改用產業資料比對。" : ""}`}
             />
+            {!last?.role && (
+              <p className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm">
+                沒有選職務，所以拿同公司或同產業所有職務來比。選了會比得更準。
+                <button type="button" onClick={() => editField("role")} className="min-h-11 font-medium text-accent underline sm:min-h-0">
+                  選擇職務
+                </button>
+              </p>
+            )}
             <div className="rounded-xl border border-accent bg-accent-soft p-4">
               <p className="font-medium">讓下一個人也查得到</p>
               <p className="mt-1 text-sm text-ink-2">匿名分享這個 offer（剛填的欄位會自動帶入），{result.confidence !== "high" ? "這裡的資料還不多，你的一筆影響很大。" : "幫資料保持新鮮。"}</p>

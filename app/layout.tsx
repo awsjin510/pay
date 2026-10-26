@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Semi_Condensed, Noto_Sans_TC } from "next/font/google";
 import Link from "next/link";
 import { LogoMark } from "@/components/Icons";
+import { CompareTray } from "@/components/CompareTray";
 import { MobileCta } from "@/components/MobileCta";
 import { SiteHeader } from "@/components/SiteHeader";
 import { meta, SITE_URL } from "@/lib/data";
@@ -64,13 +65,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </div>
             <nav className="grid grid-cols-2 gap-x-8 gap-y-2" aria-label="頁尾">
               {FOOTER.map((n) => (
-                <Link key={n.href} href={n.href} className="text-ink-2 hover:text-ink">
+                <Link key={n.href} href={n.href} className="py-2 text-ink-2 hover:text-ink sm:py-0">
                   {n.label}
                 </Link>
               ))}
             </nav>
           </div>
         </footer>
+        <CompareTray />
         <MobileCta />
         {/* Cloudflare Web Analytics: cookieless page views and Core Web Vitals. The token is a public site id. */}
         <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2cfee835fb3e404681016bf401fcfdf2"}' />

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ShareCard, type ShareResult } from "@/components/ShareCard";
+import { toWan, WanInput } from "@/components/WanInput";
 import { track } from "@/lib/track";
 
 type Status = { state: "idle" | "sending" | "done" | "error"; message?: string };
@@ -182,6 +183,7 @@ export function SubmitForm() {
         e.preventDefault();
         const form = e.currentTarget;
         const body = formJson(form);
+        if (typeof body.monthly === "string") body.monthly = toWan(body.monthly).value;
         body.agree = (form.elements.namedItem("agree") as HTMLInputElement).checked;
         setStatus({ state: "sending" });
         try {
@@ -214,6 +216,27 @@ export function SubmitForm() {
         ))}
       </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="公司" hint="可用代號，例如「螃蟹」；選到已知公司會自動帶入產業">
+          <input
+            name="company"
+            required
+            maxLength={80}
+            list="company-suggestions"
+            autoComplete="off"
+            className={input}
+            onBlur={async (e) => {
+              const value = e.currentTarget.value;
+              const hit = value ? findCompany(await loadIndex(), value) : undefined;
+              const track = formRef.current?.elements.namedItem("track") as HTMLSelectElement | null;
+              if (hit && track) track.value = hit.t;
+            }}
+          />
+          <datalist id="company-suggestions">
+            {suggestions.map((e) => (
+              <option key={e.s} value={e.n} />
+            ))}
+          </datalist>
+        </Field>
         <Field label="產業">
           <select name="track" required className={input} defaultValue="">
             <option value="" disabled>
@@ -224,25 +247,17 @@ export function SubmitForm() {
             <option value="ic">IC 設計</option>
           </select>
         </Field>
-        <Field label="公司" hint="可用代號，例如「螃蟹」">
-          <input name="company" required maxLength={80} list="company-suggestions" autoComplete="off" className={input} />
-          <datalist id="company-suggestions">
-            {suggestions.map((e) => (
-              <option key={e.s} value={e.n} />
-            ))}
-          </datalist>
-        </Field>
         <Field label="職務" hint="例如 SRE、韌體工程師、PM">
           <input name="role" required maxLength={60} className={input} />
         </Field>
         <Field label="相關年資（年）">
-          <input name="yoe" type="number" required min={0} max={50} step={0.5} className={input} />
+          <input name="yoe" type="number" inputMode="decimal" required min={0} max={50} step={0.5} className={input} />
         </Field>
-        <Field label="月底薪（萬）" hint="例如 7.5，不是 75000">
-          <input name="monthly" type="number" required min={2} max={80} step={0.1} className={input} />
+        <Field label="月底薪（萬）" hint="以「萬」為單位；填 75000 也會自動換算">
+          <WanInput name="monthly" className={input} />
         </Field>
         <Field label="年終＋獎金（幾個月，選填）" hint="不含分紅">
-          <input name="bonus_months" type="number" min={0} max={60} step={0.1} className={input} />
+          <input name="bonus_months" type="number" inputMode="decimal" min={0} max={60} step={0.1} className={input} />
         </Field>
       </div>
 
@@ -253,25 +268,25 @@ export function SubmitForm() {
             <input name="level" maxLength={30} className={input} />
           </Field>
           <Field label="現職年資（年）">
-            <input name="yoe_current" type="number" min={0} max={50} step={0.5} className={input} />
+            <input name="yoe_current" type="number" inputMode="decimal" min={0} max={50} step={0.5} className={input} />
           </Field>
           <Field label="總年薪（萬，含分紅）">
-            <input name="annual" type="number" min={15} max={3000} step={1} className={input} />
+            <input name="annual" type="number" inputMode="decimal" min={15} max={3000} step={1} className={input} />
           </Field>
           <Field label="每日平均工時（小時）">
-            <input name="hours_per_day" type="number" min={1} max={16} step={0.5} className={input} />
+            <input name="hours_per_day" type="number" inputMode="decimal" min={1} max={16} step={0.5} className={input} />
           </Field>
           <Field label="每月加班（小時）">
-            <input name="overtime_per_month" type="number" min={0} max={250} step={1} className={input} />
+            <input name="overtime_per_month" type="number" inputMode="decimal" min={0} max={250} step={1} className={input} />
           </Field>
           <Field label="加班頻率（1 很少 – 5 很常）">
-            <input name="overtime_freq" type="number" min={1} max={5} step={1} className={input} />
+            <input name="overtime_freq" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
           </Field>
           <Field label="爽度（1–5，5 最爽）">
-            <input name="happiness" type="number" min={1} max={5} step={1} className={input} />
+            <input name="happiness" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
           </Field>
           <Field label="Loading（1–5，5 最重）">
-            <input name="loading" type="number" min={1} max={5} step={1} className={input} />
+            <input name="loading" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
           </Field>
         </div>
         <div className="mt-4 space-y-4">

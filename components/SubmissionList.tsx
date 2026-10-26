@@ -23,7 +23,7 @@ const annualText = (r: Submission) => (r.annual != null ? `${r.annual} 萬` : r.
 
 function Source({ r }: { r: Submission }) {
   return r.source === "web" ? (
-    <span title="網站投稿，已人工審核" className="text-data">
+    <span title="網站投稿，已人工審核" className="text-data-text">
       <CheckBadge />
       <span className="sr-only">網站投稿・已審核</span>
     </span>
@@ -48,7 +48,7 @@ function Flags({ r, recentFromYear }: { r: Submission; recentFromYear: number })
 const Select = ({ label, value, onChange, children }: { label: string; value: string; onChange: (v: string) => void; children: React.ReactNode }) => (
   <label className="flex items-center gap-1.5 text-sm text-ink-2">
     <span className="sr-only sm:not-sr-only">{label}</span>
-    <select value={value} onChange={(e) => onChange(e.target.value)} className="rounded-xl border border-border bg-surface px-2 py-1.5 text-ink">
+    <select value={value} onChange={(e) => onChange(e.target.value)} className="min-h-11 rounded-xl border border-border bg-surface px-2 py-1.5 text-ink sm:min-h-0">
       {children}
     </select>
   </label>
@@ -123,7 +123,7 @@ export function SubmissionList({
                 key={f.id}
                 onClick={() => reset(setGroup)(f.id)}
                 aria-pressed={group === f.id}
-                className={`rounded-full border px-3 py-1 text-sm ${group === f.id ? "border-accent bg-accent-soft text-ink" : "border-border text-ink-2 hover:text-ink"}`}
+                className={`inline-flex min-h-11 items-center rounded-full border px-3 py-1 text-sm sm:min-h-0 ${group === f.id ? "border-accent bg-accent-soft text-ink" : "border-border text-ink-2 hover:text-ink"}`}
               >
                 {f.label}
               </button>
@@ -153,7 +153,7 @@ export function SubmissionList({
             </option>
           ))}
         </Select>
-        <label className="flex items-center gap-2 text-sm text-ink-2">
+        <label className="flex min-h-11 items-center gap-2 text-sm text-ink-2 sm:min-h-0">
           <input type="checkbox" checked={recent} onChange={(e) => reset((v) => setRecent(v === "1"))(e.target.checked ? "1" : "0")} />
           只看 {recentFromYear} 年後
         </label>

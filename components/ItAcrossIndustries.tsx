@@ -24,7 +24,7 @@ export function ItAcrossIndustries({ pro, tech, year, annualYear }: { pro: Acros
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-full border px-3 py-1 text-sm ${tab === t.id ? "border-accent bg-accent-soft text-ink" : "border-border text-ink-2 hover:text-ink"}`}
+            className={`min-h-11 rounded-full border px-3 py-1 text-sm sm:min-h-0 ${tab === t.id ? "border-accent bg-accent-soft text-ink" : "border-border text-ink-2 hover:text-ink"}`}
           >
             {t.label}
             <span className="ml-1.5 text-xs text-ink-3">{t.hint}</span>

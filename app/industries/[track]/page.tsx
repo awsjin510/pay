@@ -73,7 +73,7 @@ export default async function IndustryPage({ params }: Props) {
               <tr>
                 <th className="px-3 py-2 font-normal">職務</th>
                 <th className="px-3 py-2 text-right font-normal">筆數</th>
-                <th className="px-3 py-2 font-normal">月底薪分布（色帶 P25–P75，直線中位數）</th>
+                <th className="px-3 py-2 font-normal">月底薪分布（色帶是中間一半的人，直線是中位數）</th>
                 <th className="px-3 py-2 text-right font-normal">月薪中位數</th>
                 <th className="px-3 py-2 text-right font-normal">年薪中位數</th>
               </tr>

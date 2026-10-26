@@ -25,7 +25,7 @@ export function LevelTable({ stats }: { stats: Stats }) {
         <tr>
           <th className="py-2 font-normal">年資</th>
           <th className="py-2 text-right font-normal">筆數</th>
-          <th className="py-2 pl-4 font-normal">月底薪分布（P25–P75，直線為中位數）</th>
+          <th className="py-2 pl-4 font-normal">月底薪分布（色帶是中間一半的人，直線是中位數）</th>
           <th className="py-2 text-right font-normal">月薪中位數</th>
           <th className="py-2 text-right font-normal">年薪中位數</th>
         </tr>

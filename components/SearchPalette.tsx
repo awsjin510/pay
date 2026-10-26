@@ -103,6 +103,10 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
           {q && entries.length > 0 && results.length === 0 && (
             <li className="px-4 py-6 text-sm text-ink-2">
               找不到「{q}」。試試英文名或代號，或
+              <Link href="/offer/" onClick={onClose} className="text-accent underline">
+                用產業資料檢查 offer
+              </Link>
+              、
               <Link href="/submit/" onClick={onClose} className="text-accent underline">
                 分享這間公司的薪資
               </Link>
@@ -121,7 +125,7 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
                   {e.e && e.e !== e.n && <span className="ml-2 text-sm text-ink-3">{e.e}</span>}
                 </span>
                 <span className="tabular shrink-0 text-sm text-ink-2">
-                  {e.m != null ? `${e.m} 萬` : `${e.c} 筆`}
+                  {e.m != null ? `${e.m} 萬` : <span className="rounded bg-surface-2 px-1.5 py-0.5 text-xs">資料不足・{e.c} 筆</span>}
                   <span className="ml-2 text-xs text-ink-3">{TRACKS[e.t]}</span>
                 </span>
               </button>

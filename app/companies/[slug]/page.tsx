@@ -8,6 +8,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { Payslip, type PayslipRow } from "@/components/Payslip";
 import { SectionTabs } from "@/components/SectionTabs";
 import { SubmissionList } from "@/components/SubmissionList";
+import { AddToCompare } from "@/components/CompareTray";
 import { confidenceOf, ThinCompany } from "@/components/ThinCompany";
 import { TrackView } from "@/components/TrackView";
 import { companies, companyBySlug, describeCompany, INDUSTRY_LABELS, meta, nicknamesOf, SITE_URL, submissions, trackLabel, tracks } from "@/lib/data";
@@ -109,10 +110,9 @@ export default async function CompanyPage({ params }: Props) {
         {nick.length > 0 && <p className="mt-1 text-ink-2">PTT 代號：{nick.join("、")}</p>}
       </header>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <section id="hero" className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         {slip.length > 0 ? (
           <Payslip
-            animate
             heading={`${c.name} 薪資條`}
             sub={s ? `${c.n} 筆分享，可信度${confidence}` : `${c.n} 筆分享`}
             rows={slip}
@@ -152,10 +152,8 @@ export default async function CompanyPage({ params }: Props) {
             <Link href={`/offer/?company=${c.slug}`} className="rounded-xl border border-border bg-surface px-3.5 py-2 text-sm hover:border-accent">
               這間的 offer 合理嗎？
             </Link>
-            <Link href={`/compare/?c=${c.slug}`} className="rounded-xl border border-border bg-surface px-3.5 py-2 text-sm hover:border-accent">
-              和其他公司比較
-            </Link>
-            <Link href={`/submit/?company=${c.slug}`} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink hover:opacity-90">
+            {s && <AddToCompare slug={c.slug} name={c.name} />}
+            <Link data-cta href={`/submit/?company=${c.slug}`} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink hover:opacity-90">
               分享我在{c.name}的薪資
             </Link>
           </div>
@@ -168,7 +166,7 @@ export default async function CompanyPage({ params }: Props) {
         </div>
       </section>
 
-      <SectionTabs sections={sections} />
+      <SectionTabs sections={sections} summary={s?.monthly ? { title: c.name, value: `${s.monthly.median} 萬`, observe: "hero" } : undefined} />
 
       {s && (
         <section id="distribution" className="scroll-mt-28">

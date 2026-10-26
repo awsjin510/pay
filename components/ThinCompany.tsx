@@ -19,7 +19,7 @@ export function ThinCompany({ company, similar, similarLabel, track }: { company
           ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Link href={`/submit/?company=${company.slug}`} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink">
+          <Link data-cta href={`/submit/?company=${company.slug}`} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink">
             我在這裡工作，匿名分享
           </Link>
           <Link href={`/offer/?company=${company.slug}`} className="rounded-lg border border-border px-3.5 py-2 text-sm hover:border-accent">

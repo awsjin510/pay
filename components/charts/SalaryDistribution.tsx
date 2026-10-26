@@ -104,8 +104,9 @@ export function SalaryDistribution({ values, scope }: { values: number[]; scope:
                 fill="var(--data)"
                 stroke="var(--surface)"
                 strokeWidth={2}
-                onMouseEnter={() => setHover(i)}
-                onMouseLeave={() => setHover(null)}
+                onPointerEnter={() => setHover(i)}
+                onPointerLeave={() => setHover(null)}
+                onClick={() => setHover(i)}
               />
             ))}
 
@@ -115,7 +116,7 @@ export function SalaryDistribution({ values, scope }: { values: number[]; scope:
               const bx = x(b.from) + 1;
               const bw = Math.max(x(b.to) - x(b.from) - 2, 1);
               return (
-                <g key={b.from} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
+                <g key={b.from} onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(null)} onClick={() => setHover(i)}>
                   <rect x={bx - 1} y={TOP} width={bw + 2} height={plotH} fill="transparent" />
                   {b.count > 0 && <path d={`M${bx},${base} v${-h + 2} q0,-2 2,-2 h${bw - 4} q2,0 2,2 v${h - 2} z`} fill="var(--data)" opacity={hover == null || hover === i ? 1 : 0.55} />}
                 </g>

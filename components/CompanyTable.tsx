@@ -38,7 +38,7 @@ export function CompanyTable({ companies, recentFromYear }: { companies: Company
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2">
+        <label className="flex min-h-11 items-center gap-2 sm:min-h-0">
           <input type="checkbox" checked={recent} onChange={(e) => setRecent(e.target.checked)} />
           只看 {recentFromYear} 年後的資料
         </label>
@@ -48,7 +48,7 @@ export function CompanyTable({ companies, recentFromYear }: { companies: Company
           <button
             key={s.key}
             onClick={() => setSort(s.key)}
-            className={`rounded-full border px-3 py-0.5 ${sort === s.key ? "border-accent text-ink" : "border-border text-ink-2 hover:text-ink"}`}
+            className={`inline-flex min-h-11 items-center rounded-full border px-3 py-0.5 sm:min-h-0 ${sort === s.key ? "border-accent text-ink" : "border-border text-ink-2 hover:text-ink"}`}
           >
             {s.label}
           </button>

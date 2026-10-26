@@ -38,7 +38,7 @@ export function StatsHero({
 
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      <Payslip animate heading={heading} sub={`${stats.n.toLocaleString()} 筆分享`} rows={rows} footnote={footnote} />
+      <Payslip heading={heading} sub={`${stats.n.toLocaleString()} 筆分享`} rows={rows} footnote={footnote} />
       <div className="flex flex-col gap-4">
         <dl className="rounded-xl border border-border bg-surface px-4 py-1">
           {stats.hoursPerDay && <Fact label="每日工時" value={String(stats.hoursPerDay.median)} hint="小時" />}

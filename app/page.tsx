@@ -33,7 +33,6 @@ function LedgerRow({ href, label, note, stats }: { href: string; label: string; 
 }
 
 export default function Home() {
-  const entries = companies.map(({ slug, name, en, aliases, track, n }) => ({ slug, name, en, aliases, track, n }));
   const featured = companyBySlug("mediatek") ?? companies[0];
   const popular = companies.filter((c) => c.stats).slice(0, 12);
   const latest = [...submissions]
@@ -77,7 +76,7 @@ export default function Home() {
             {meta.total.toLocaleString()} 筆匿名分享，對照 {meta.official.matched} 間上市櫃公司的官方薪資揭露。查公司、看年資、比行情，完全免費，不用分享才解鎖。
           </p>
           <div className="mt-6 max-w-xl">
-            <CompanySearch entries={entries} trackLabels={meta.trackLabels} />
+            <CompanySearch />
           </div>
           <p className="mt-3 max-w-xl text-sm">
             拿到 offer 了？
@@ -88,7 +87,7 @@ export default function Home() {
           <div className="mt-3 flex max-w-xl flex-wrap items-center gap-2 text-sm">
             <span className="text-ink-3">常被查：</span>
             {POPULAR.filter((p) => companyBySlug(p.slug)).map((p) => (
-              <Link key={p.slug} href={`/companies/${p.slug}/`} className="rounded-full border border-border bg-surface px-3 py-1 text-ink-2 hover:border-accent hover:text-ink">
+              <Link key={p.slug} href={`/companies/${p.slug}/`} className="inline-flex min-h-11 items-center rounded-full border border-border bg-surface px-3 py-1 text-ink-2 hover:border-accent hover:text-ink sm:min-h-0">
                 {p.label}
               </Link>
             ))}
@@ -169,7 +168,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-          <Link href="/submit/" className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:opacity-90">
+          <Link data-cta href="/submit/" className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:opacity-90">
             匿名分享我的薪資
           </Link>
         </div>

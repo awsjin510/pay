@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { RangeBar } from "@/components/RangeBar";
+import { setTray, useTray } from "@/lib/compareTray";
 import { track } from "@/lib/track";
 import type { Dist } from "@/lib/data";
 
@@ -33,10 +34,13 @@ export function CompareTool({ entries, trackLabels }: { entries: CompareEntry[];
   // Shareable links: /compare/?c=mediatek,realtek. The URL seeds the selection until the
   // visitor changes it (null = still following the URL).
   const search = useSyncExternalStore(noSubscribe, () => window.location.search, () => "");
-  const fromUrl = useMemo(
-    () => (new URLSearchParams(search).get("c") ?? "").split(",").filter((s) => entries.some((e) => e.slug === s)).slice(0, MAX),
-    [search, entries],
-  );
+  const tray = useTray();
+  // URL wins (shared links); otherwise start from the tray built on company pages.
+  const fromUrl = useMemo(() => {
+    const c = new URLSearchParams(search).get("c");
+    const slugs = c ? c.split(",") : tray.map((t) => t.slug);
+    return slugs.filter((s) => entries.some((e) => e.slug === s)).slice(0, MAX);
+  }, [search, entries, tray]);
   const [chosenSlugs, setPicked] = useState<string[] | null>(null);
   const picked = chosenSlugs ?? fromUrl;
   const [q, setQ] = useState("");
@@ -47,6 +51,12 @@ export function CompareTool({ entries, trackLabels }: { entries: CompareEntry[];
     // Count each time a comparison becomes possible, not every change after that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [comparing]);
+
+  // Whatever is being compared here becomes the tray, so other pages show the same picks.
+  useEffect(() => {
+    if (chosenSlugs == null) return;
+    setTray(chosenSlugs.map((slug) => ({ slug, name: entries.find((e) => e.slug === slug)?.name ?? slug })));
+  }, [chosenSlugs, entries]);
 
   useEffect(() => {
     if (chosenSlugs == null) return;
@@ -117,7 +127,7 @@ export function CompareTool({ entries, trackLabels }: { entries: CompareEntry[];
                     <Link href={`/companies/${c.slug}/`} className="hover:text-accent">
                       {c.name}
                     </Link>
-                    <button onClick={() => setPicked(picked.filter((p) => p !== c.slug))} className="ml-2 text-xs text-ink-3 hover:text-ink" aria-label={`移除 ${c.name}`}>
+                    <button onClick={() => setPicked(picked.filter((p) => p !== c.slug))} className="ml-1 inline-grid size-9 place-items-center text-xs text-ink-3 hover:text-ink" aria-label={`移除 ${c.name}`}>
                       ✕
                     </button>
                   </th>

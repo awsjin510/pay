@@ -39,7 +39,7 @@ export function ExperienceCurve({ points, title = "年資與月底薪" }: { poin
     <figure className="rounded-xl border border-border bg-surface p-4 sm:p-5">
       <figcaption>
         <div className="font-medium">{title}</div>
-        <div className="text-xs text-ink-3">線是中位數，色帶是 P25–P75；少於 3 筆的年資不畫</div>
+        <div className="text-xs text-ink-3">線是中位數，色帶是中間一半的人；少於 3 筆的年資不畫</div>
       </figcaption>
       <div ref={box} className="mt-3" style={{ minHeight: H }}>
       {W > 0 && (
@@ -75,7 +75,7 @@ export function ExperienceCurve({ points, title = "年資與月底薪" }: { poin
           相關年資（年）
         </text>
         {points.map((p, i) => (
-          <rect key={p.label} x={x(i) - band / 2} y={M.t} width={band} height={H - M.t - M.b} fill="transparent" onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} />
+          <rect key={p.label} x={x(i) - band / 2} y={M.t} width={band} height={H - M.t - M.b} fill="transparent" onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(null)} onClick={() => setHover(i)} />
         ))}
       </svg>
       )}
@@ -85,7 +85,7 @@ export function ExperienceCurve({ points, title = "年資與月底薪" }: { poin
           ? h.monthly
             ? `年資 ${h.label} 年：中位數 ${h.monthly.median} 萬，中間一半落在 ${h.monthly.p25}–${h.monthly.p75} 萬（${h.monthly.n} 筆）`
             : `年資 ${h.label} 年：只有 ${h.n} 筆，不足以計算`
-          : "把游標移到圖上看各年資的數字。"}
+          : "點一下或把游標移到圖上，看各年資的數字。"}
       </p>
       <table className="sr-only">
         <caption>{title}</caption>
