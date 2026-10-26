@@ -18,6 +18,12 @@ npm run build        # 靜態檔輸出到 out/
 
 網站部署在 Cloudflare Workers（靜態資產），網址 <https://pay.operation.tw>，設定在 `wrangler.jsonc`。
 
+**自動部署**：Cloudflare Workers Builds 已連接本 repo，每次 push 到 `main` 會自動執行
+`npm run data:fetch && npm run build`（重新抓試算表 → 建置），再 `npx wrangler deploy`。
+建置紀錄在 Cloudflare Dashboard → Workers 和 Pages → pay → 部署。Node 版本由 `.node-version` 指定。
+
+手動部署：
+
 ```bash
 npx wrangler login   # 第一次需要授權
 npm run deploy       # 建置並上傳 out/
