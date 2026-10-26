@@ -1,0 +1,49 @@
+# Weekly: re-fetch the 薪資紀錄 sheet, official salaries and approved web submissions.
+# If anything changed, commit it to main; that push makes Cloudflare Workers Builds redeploy.
+name: Sync data
+
+on:
+  schedule:
+    - cron: "0 1 * * 1" # Monday 09:00 Asia/Taipei
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Commit even if only the timestamp changed (to test the deploy chain)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-data
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      # The ETL uses only Node built-ins, so no npm install is needed.
+      - name: Fetch and rebuild data
+        run: node etl/build.mjs --fetch
+
+      - name: Commit if data changed
+        env:
+          FORCE: ${{ inputs.force }}
+        run: |
+          # data/meta.json always has a new generatedAt, so it alone doesn't count as a change.
+          if git diff --quiet -- data public ':(exclude)data/meta.json' && [ "$FORCE" != "true" ]; then
+            echo "No data changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data public
+          git commit -m "每週同步資料（$(date -u +%F)）"
+          git push
