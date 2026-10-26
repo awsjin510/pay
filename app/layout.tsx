@@ -71,6 +71,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </footer>
         <MobileCta />
+        {/* Cloudflare Web Analytics: cookieless page views and Core Web Vitals. The token is a public site id. */}
+        <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2cfee835fb3e404681016bf401fcfdf2"}' />
       </body>
     </html>
   );
