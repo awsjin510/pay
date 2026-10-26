@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { Submission } from "@/lib/data";
 
@@ -9,25 +10,61 @@ export function SubmissionList({
   rows,
   recentFromYear,
   roleLabels,
+  companyNames,
+  filters,
 }: {
   rows: Submission[];
   recentFromYear: number;
   roleLabels: Record<string, string>;
+  // Set on cross-company lists so each card names its company.
+  companyNames?: Record<string, string>;
+  filters?: { id: string; label: string; match: string[] }[];
 }) {
   const [recent, setRecent] = useState(false);
+  const [filter, setFilter] = useState<string | null>(null);
+  const allowed = filters?.find((f) => f.id === filter)?.match;
   const shown = rows
     .filter((r) => !recent || (r.year ?? 0) >= recentFromYear)
+    .filter((r) => !allowed || allowed.includes(r.id))
     .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 
   return (
     <div>
-      <label className="mb-3 flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={recent} onChange={(e) => setRecent(e.target.checked)} />
-        只看 {recentFromYear} 年後的資料
-      </label>
+      <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+        {filters && (
+          <>
+            {[{ id: null, label: "全部" }, ...filters].map((f) => (
+              <button
+                key={f.id ?? "all"}
+                onClick={() => setFilter(f.id)}
+                className={`rounded-full border px-3 py-0.5 ${filter === f.id ? "border-accent text-ink" : "border-border text-ink-2 hover:text-ink"}`}
+              >
+                {f.label}
+              </button>
+            ))}
+            <span className="text-ink-3">|</span>
+          </>
+        )}
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={recent} onChange={(e) => setRecent(e.target.checked)} />
+          只看 {recentFromYear} 年後的資料
+        </label>
+        <span className="text-ink-3">{shown.length} 筆</span>
+      </div>
       <ul className="space-y-3">
         {shown.map((r) => (
           <li key={r.id} className="rounded-lg border border-border bg-surface p-4">
+            {companyNames && (
+              <div className="mb-1 text-sm">
+                {r.company ? (
+                  <Link href={`/companies/${r.company}/`} className="text-accent hover:underline">
+                    {companyNames[r.company]}
+                  </Link>
+                ) : (
+                  <span className="text-ink-2">{r.companyRaw}（未具名）</span>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div>
                 <span className="font-medium">{r.roleRaw || "（未填職務）"}</span>

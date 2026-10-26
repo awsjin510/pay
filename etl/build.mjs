@@ -5,7 +5,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseCsv } from "./csv.mjs";
-import { ANONYMOUS_PATTERNS, buildAliasIndex, normalizeKey } from "./companies.mjs";
+import { ANONYMOUS_PATTERNS, buildAliasIndex, normalizeKey, sectorFromName } from "./companies.mjs";
 import { classifyRole, LEVEL_BANDS, levelBand, ROLES, OTHER_ROLE } from "./roles.mjs";
 
 const SHEET_ID = "1-lMc-QktDGlO05je0zyR7P7QnfuoaECcsGUeKZZy6q0";
@@ -113,6 +113,22 @@ function cleanDate(raw, flags) {
 // Person-directed insults and unverified factual accusations. Plain negative opinions
 // ("不推", "爛公司", "幹話") are fine and are not matched.
 const HARSH = /智商|智障|白癡|白痴|垃圾(老人|主管|同事|老闆)|廢物(長官|主管|老闆)|腦殘|低能|無腦人|很笨|米蟲|臭魚爛蝦|亂咬人|罵三字經|騙騙?客戶|沒路用|舔上級/;
+
+// 雲端 / 資安 by job title. Stricter than the role taxonomy's devops bucket, which also
+// holds generic IT / MIS titles.
+const SECURITY_ROLE = /資安|資訊安全|網安|security|(?<![a-z])soc(?![a-z])|紅隊|藍隊|滲透|pentest|威脅/i;
+const CLOUD_ROLE = /(?<![a-z])sre(?![a-z])|devops|dev ops|雲端|cloud|維運|infra|platform|k8s|kubernetes|(?<![a-z])(aws|gcp|azure)(?![a-z])/i;
+
+function sectorFromRole(raw) {
+  if (SECURITY_ROLE.test(raw)) return "security";
+  if (CLOUD_ROLE.test(raw)) return "cloud";
+  return null;
+}
+
+const SECTORS = [
+  { id: "cloud", label: "雲端 / DevOps / SRE" },
+  { id: "security", label: "資安" },
+];
 
 function slugFor(name) {
   const ascii = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -223,6 +239,8 @@ async function main() {
         companyRaw: rawCompany,
         roleRaw: r[2].trim(),
         role: role.id,
+        sectorRole: sectorFromRole(r[2]),
+        sectorCompany: known?.sector ?? (known ? null : sectorFromName(rawCompany)),
         levelRaw: r[3].trim(),
         level: levelBand(yoe),
         yoe,
@@ -268,6 +286,7 @@ async function main() {
       name,
       en: c.known?.en ?? null,
       track,
+      sector: c.rows[0].sectorCompany,
       verified: Boolean(c.known),
       aliases: rawNames.map(([n]) => n).filter((n) => n !== name),
       n: c.rows.length,
@@ -308,14 +327,53 @@ async function main() {
     };
   });
 
-  const interviews = (await readTab("interviews")).map((r, i) => ({
-    id: `iv-${i + 1}`,
-    company: r[0].trim(),
-    role: r[1].trim(),
-    process: r[2].trim(),
-    offered: r[3].trim() === "是",
-    salary: r[4].trim() || null,
-  }));
+  // 雲端 / 資安 專區: rows count by job title (sectorRole) or by employer (sectorCompany).
+  const sectors = SECTORS.map((sec) => {
+    const byRole = submissions.filter((s) => s.sectorRole === sec.id);
+    const byCompany = submissions.filter((s) => s.sectorCompany === sec.id);
+    const rows = [...new Set([...byRole, ...byCompany])];
+    // Per company, count only the rows that put it in this sector (華碩 has 81 rows but 1 SRE).
+    const perCompany = new Map();
+    for (const s of rows) if (s.company) perCompany.set(s.company, [...(perCompany.get(s.company) ?? []), s]);
+    return {
+      id: sec.id,
+      label: sec.label,
+      roleStats: summarize(byRole),
+      companyStats: summarize(byCompany),
+      rowIds: rows.map((s) => s.id),
+      companies: [...perCompany.entries()]
+        .map(([slug, rs]) => {
+          const c = companyList.find((x) => x.slug === slug);
+          return { slug, name: c.name, n: rs.length, isSectorCompany: c.sector === sec.id, monthly: rs.map((s) => s.monthly).filter((v) => v != null), stats: summarize(rs) };
+        })
+        .sort((a, b) => b.n - a.n),
+    };
+  });
+
+  const companyBySlug = new Map(companyList.map((c) => [c.slug, c]));
+  const slugByKnownName = new Map(companyList.filter((c) => c.verified).map((c) => [c.name, c.slug]));
+  const slugByRawKey = new Map();
+  for (const s of submissions) if (s.company) slugByRawKey.set(normalizeKey(s.companyRaw), s.company);
+  const interviews = (await readTab("interviews")).map((r, i) => {
+    const company = r[0].trim();
+    const salary = r[4].trim() || null;
+    const known = aliases.global.get(normalizeKey(company));
+    const slug = (known && slugByKnownName.get(known.name)) ?? slugByRawKey.get(normalizeKey(company)) ?? null;
+    const monthly = salary?.match(/(\d{4,6})\s*\/\s*月/);
+    const months = salary?.match(/保\s*(\d{2})/);
+    return {
+      id: `iv-${i + 1}`,
+      company: slug ? companyBySlug.get(slug).name : company,
+      companySlug: slug,
+      role: r[1].trim(),
+      sector: sectorFromRole(r[1]) ?? known?.sector ?? sectorFromName(company),
+      process: r[2].trim(),
+      offered: r[3].trim() === "是",
+      salary,
+      offerMonthly: monthly ? round(Number(monthly[1]) / 10000, 2) : null,
+      offerGuaranteedMonths: months ? Number(months[1]) : null,
+    };
+  });
 
   const flagCounts = {};
   for (const s of submissions) for (const f of s.flags) flagCounts[f] = (flagCounts[f] ?? 0) + 1;
@@ -341,6 +399,7 @@ async function main() {
   await writeFile(new URL("tracks.json", OUT_DIR), JSON.stringify(tracks));
   await writeFile(new URL("roles.json", OUT_DIR), JSON.stringify(roles));
   await writeFile(new URL("interviews.json", OUT_DIR), JSON.stringify(interviews));
+  await writeFile(new URL("sectors.json", OUT_DIR), JSON.stringify(sectors));
   await writeFile(new URL("meta.json", OUT_DIR), JSON.stringify(meta, null, 2));
   console.log(JSON.stringify(meta, null, 2));
 }

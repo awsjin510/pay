@@ -60,7 +60,14 @@ export const COMPANIES = [
   { name: "Dell", en: "Dell", track: "system", aliases: [] },
 
   // ── 純軟 ──
-  { name: "趨勢科技", en: "Trend Micro", track: "soft", aliases: ["趨勢", "Trend Micro", "TrendMicro", "TrendMicro趨勢科技"] },
+  { name: "趨勢科技", en: "Trend Micro", track: "soft", sector: "security", aliases: ["趨勢", "Trend Micro", "TrendMicro", "TrendMicro趨勢科技"] },
+  { name: "睿控網安", en: "TXOne Networks", track: "soft", sector: "security", aliases: ["TXOne", "TXOne Network", "TXOne Networks 睿控網安"] },
+  { name: "杜浦數位安全", en: "TeamT5", track: "soft", sector: "security", aliases: ["TeamT5", "TeamT5 杜浦數位安全", "杜浦"] },
+  { name: "奧義智慧科技", en: "CyCraft", track: "soft", sector: "security", aliases: ["奧義智慧", "奧義", "CyCraft"] },
+  { name: "中華資安國際", en: "CHT Security", track: "soft", sector: "security", aliases: ["中華資安"] },
+  { name: "戴夫寇爾", en: "DEVCORE", track: "soft", sector: "security", aliases: ["DEVCORE"] },
+  { name: "博弘雲端", en: "Nextlink", track: "soft", sector: "cloud", aliases: ["博弘雲端科技", "Nextlink"] },
+  { name: "伊雲谷", en: "eCloudvalley", track: "soft", sector: "cloud", aliases: ["eCloudvalley", "ecloudvxxxxx"] },
   { name: "Google", en: "Google", track: "soft", aliases: ["Google Taiwan", "Google Taipei", "谷歌"] },
   { name: "微軟", en: "Microsoft", track: "soft", aliases: ["Microsoft"] },
   { name: "新思科技", en: "Synopsys", track: "soft", aliases: ["Synopsys", "Synopsis", "Synopsys 新思", "Synopsys新思", "新思"] },
@@ -79,7 +86,7 @@ export const COMPANIES = [
   { name: "網家", en: "PChome", track: "soft", aliases: ["PChome", "pchome網家", "PChome網家"] },
   { name: "Yahoo", en: "Yahoo", track: "soft", aliases: [] },
   { name: "Amazon", en: "Amazon", track: "soft", aliases: ["AWS"] },
-  { name: "Netskope", en: "Netskope", track: "soft", aliases: [] },
+  { name: "Netskope", en: "Netskope", track: "soft", sector: "security", aliases: [] },
   { name: "愛酷智能", en: "Accuhit", track: "soft", aliases: ["愛酷智能科技", "愛酷智能 (accuhit)"] },
   { name: "Shoalter", en: "Shoalter", track: "soft", aliases: ["Shoalter Technology"] },
   { name: "Innova Solutions", en: "Innova Solutions", track: "soft", aliases: ["innovasolutions", "Innova"] },
@@ -90,6 +97,13 @@ export const ANONYMOUS_PATTERNS = [
   /某/, /^新創(公司)?$/, /^(外商|美商|德商|日商|陸商|台商)$/, /^傳產/, /^電商$/, /豬屎屋/, /二線/, /台元科技/,
   /博弈|博奕|菠菜/, /^餐飲$/, /^無$/, /^X$/i, /^[A-Za-z]$/, /^[\p{P}\p{S}\s]*$/u, /^\d{1,3}$/,
 ];
+
+// Companies outside COMPANIES whose own name says they are a cloud / security business.
+export function sectorFromName(raw) {
+  if (/資安|網安|security|secure/i.test(raw)) return "security";
+  if (/雲端|cloud|(?<![a-z])(aws|gcp|azure)(?![a-z])/i.test(raw)) return "cloud";
+  return null;
+}
 
 const SUFFIXES = /(股份有限公司|有限公司|公司)$/;
 

@@ -2,6 +2,7 @@ import companiesJson from "@/data/companies.json";
 import interviewsJson from "@/data/interviews.json";
 import metaJson from "@/data/meta.json";
 import rolesJson from "@/data/roles.json";
+import sectorsJson from "@/data/sectors.json";
 import submissionsJson from "@/data/submissions.json";
 import tracksJson from "@/data/tracks.json";
 
@@ -25,11 +26,14 @@ export type Stats = {
   byLevel: LevelStats[];
 };
 
+export type SectorId = "cloud" | "security";
+
 export type Company = {
   slug: string;
   name: string;
   en: string | null;
   track: TrackId;
+  sector: SectorId | null;
   verified: boolean;
   aliases: string[];
   n: number;
@@ -45,6 +49,8 @@ export type Submission = {
   companyRaw: string;
   roleRaw: string;
   role: string;
+  sectorRole: SectorId | null;
+  sectorCompany: SectorId | null;
   levelRaw: string;
   level: string | null;
   yoe: number | null;
@@ -81,13 +87,34 @@ export type Role = {
   topCompanies: { slug: string; name: string; n: number; monthly: Dist | null; annual: Dist | null }[];
 };
 
-export type Interview = { id: string; company: string; role: string; process: string; offered: boolean; salary: string | null };
+export type Interview = {
+  id: string;
+  company: string;
+  companySlug: string | null;
+  role: string;
+  sector: SectorId | null;
+  process: string;
+  offered: boolean;
+  salary: string | null;
+  offerMonthly: number | null;
+  offerGuaranteedMonths: number | null;
+};
+
+export type Sector = {
+  id: SectorId;
+  label: string;
+  roleStats: Stats | null;
+  companyStats: Stats | null;
+  rowIds: string[];
+  companies: { slug: string; name: string; n: number; isSectorCompany: boolean; monthly: number[]; stats: Stats | null }[];
+};
 
 export const companies = companiesJson as Company[];
 export const submissions = submissionsJson as Submission[];
 export const tracks = tracksJson as Track[];
 export const roles = rolesJson as Role[];
 export const interviews = interviewsJson as Interview[];
+export const sectors = sectorsJson as Sector[];
 export const meta = metaJson;
 
 export const TRACK_IDS: TrackId[] = ["soft", "system", "ic"];

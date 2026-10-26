@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CompanySearch } from "@/components/CompanySearch";
-import { companies, fmtWan, meta, tracks } from "@/lib/data";
+import { companies, fmtWan, interviews, meta, tracks } from "@/lib/data";
 
 export default function Home() {
   const entries = companies.map(({ slug, name, en, aliases, track, n }) => ({ slug, name, en, aliases, track, n }));
@@ -32,6 +32,16 @@ export default function Home() {
             </Link>
           ))}
         </div>
+        <Link
+          href="/sectors/cloud-security/"
+          className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface px-5 py-4 hover:border-accent"
+        >
+          <span>
+            <span className="font-medium">雲端 / 資安專區</span>
+            <span className="ml-2 text-sm text-ink-2">DevOps、SRE、資安研究員薪資與 {interviews.length} 篇面試心得</span>
+          </span>
+          <span className="text-sm text-accent">前往 →</span>
+        </Link>
       </section>
 
       <section>
