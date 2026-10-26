@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-10-26T03:28:42.331Z",
+  "sheetId": "1-lMc-QktDGlO05je0zyR7P7QnfuoaECcsGUeKZZy6q0",
+  "minN": 3,
+  "recentFromYear": 2025,
+  "total": 2108,
+  "namedCompanies": 771,
+  "anonymousRows": 103,
+  "years": {
+    "2023": 1340,
+    "2024": 324,
+    "2025": 201,
+    "2026": 238,
+    "unknown": 5
+  },
+  "flags": {
+    "monthly_unit_yuan": 382,
+    "annual_estimated": 114,
+    "bonus_invalid": 32,
+    "annual_unit_yuan": 131,
+    "bonus_from_percent": 6,
+    "monthly_unit_guess_k": 32,
+    "annual_below_base": 30,
+    "annual_invalid": 25,
+    "comment_harsh": 13,
+    "monthly_invalid": 10,
+    "annual_far_above_estimate": 2,
+    "future_date": 1
+  },
+  "levels": [
+    {
+      "id": "entry",
+      "label": "新鮮人（0–1 年）"
+    },
+    {
+      "id": "junior",
+      "label": "初中階（2–4 年）"
+    },
+    {
+      "id": "senior",
+      "label": "資深（5–9 年）"
+    },
+    {
+      "id": "expert",
+      "label": "專家 / 主管（10 年+）"
+    }
+  ],
+  "roleLabels": {
+    "management": "管理職",
+    "ic-design": "IC 設計",
+    "verification": "IC 驗證",
+    "firmware": "韌體",
+    "hardware": "硬體 / 電子",
+    "mechanical": "機構 / 熱流",
+    "app-eng": "應用工程 (SA/AE/FAE)",
+    "qa": "測試 / 品保",
+    "pm": "PM",
+    "data-ai": "AI / 資料",
+    "devops": "DevOps / SRE / 雲端",
+    "security": "資安",
+    "frontend": "前端",
+    "fullstack": "全端",
+    "backend": "後端",
+    "mobile": "行動 App",
+    "software": "軟體工程（一般）",
+    "sales": "業務",
+    "rd-general": "研發（未細分）",
+    "other": "其他"
+  },
+  "trackLabels": {
+    "soft": "純軟",
+    "system": "系統廠",
+    "ic": "IC 設計"
+  }
+}
