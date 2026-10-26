@@ -46,7 +46,7 @@ export default async function IndustryPage({ params }: Props) {
         </p>
       </header>
 
-      <StatsHero heading={`${t.label} 薪資條`} stats={t.stats} recent={t.recentStats} recentFromYear={meta.recentFromYear} />
+      <StatsHero heading={`${t.label} 薪資條`} stats={t.stats} recent={t.recentStats} recentFromYear={meta.recentFromYear} estimate={t.estimate} />
 
       <SectionTabs
         sections={[

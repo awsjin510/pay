@@ -75,6 +75,9 @@ export default function AboutPage() {
           <li>Bonus 填百分比的 {f("bonus_from_percent")} 筆換算為月數；不合理值 {f("bonus_invalid")} 筆不採計。</li>
           <li>職級是各公司自己的制度（E7、L4、高工），統計改用「相關年資」分段比較。</li>
           <li>任何公司或職務少於 {meta.minN} 筆時不顯示統計。</li>
+          <li>
+            「推估 {meta.estimate.year} 月底薪」：每筆資料依填寫年份，以上市櫃公司非主管薪資中位數的年增率中位數（{meta.estimate.growth}%，{meta.estimate.basis.toLocaleString()} 家）逐年成長後再取中位數。這是推估，不是實際回報，也不代表公司今年的調薪幅度。
+          </li>
         </ul>
       </section>
 
@@ -85,6 +88,7 @@ export default function AboutPage() {
           <li>心得中的「姓氏＋職稱」（例如某董、某經理）、email、電話會自動遮蔽。</li>
           <li>含針對個人的貶損字眼的 {f("comment_harsh")} 則心得不公開，只保留薪資數字。</li>
           <li>網站投稿不收集姓名與 email；防灌票只用當日加鹽的 IP 雜湊。</li>
+          <li>薪酬組成（分紅、股票、簽約金）與工作條件（每週工時、加班費、遠端、特休）只公開 {meta.minN} 人以上的統計，不出現在單筆資料或開放資料檔中。</li>
           <li>使用統計只累計每日事件次數（看了哪類頁面、是否完成投稿、從哪個管道來），不記錄 IP、cookie、裝置或輸入的薪資；Offer 檢查器的比對完全在瀏覽器內完成。</li>
         </ul>
       </section>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExperienceCurve } from "@/components/charts/ExperienceCurve";
 import { SalaryDistribution } from "@/components/charts/SalaryDistribution";
+import { ConditionFacts, estimateRow } from "@/components/Conditions";
 import { YearMix } from "@/components/DataNotes";
 import { JsonLd } from "@/components/JsonLd";
 import { Payslip, type PayslipRow } from "@/components/Payslip";
@@ -56,6 +57,7 @@ export default async function CompanyPage({ params }: Props) {
   if (s?.monthly) {
     slip.push({ label: "月底薪（中位數）", value: String(s.monthly.median), unit: "萬", emphasis: true, note: `中間一半落在 ${s.monthly.p25}–${s.monthly.p75} 萬` });
   }
+  slip.push(...estimateRow(c.estimate));
   if (s?.bonusMonths) slip.push({ label: "年終＋獎金", value: String(s.bonusMonths.median), unit: "個月", note: "不含分紅" });
   if (s?.annual) slip.push({ label: "總年薪（中位數）", value: String(s.annual.median), unit: "萬", note: "含分紅，自行回報" });
   if (o) slip.push({ label: `非主管薪資中位數`, value: String(o.median), unit: "萬", official: true, note: `${o.year} 年全年，公開資訊觀測站` });
@@ -138,6 +140,7 @@ export default async function CompanyPage({ params }: Props) {
               )}
             </dl>
           )}
+          {s && <ConditionFacts stats={s} />}
           {s && <YearMix stats={s} />}
           {!s && slip.length > 0 && <ThinCompany company={c} similar={similar} similarLabel={similarLabel} track={tracks.find((t) => t.id === c.track)} />}
           {c.offers && (

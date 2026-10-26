@@ -16,7 +16,13 @@ export type TrackEvent =
   | "offer_view"
   | "offer_check"
   | "offer_share_click"
-  | "compare_used";
+  | "compare_used"
+  | "want_click"
+  | "invite_click"
+  | "calc_view"
+  | "calc_compute"
+  | "calc_check_click"
+  | "negotiate_copy";
 
 export function track(name: TrackEvent, scope = "") {
   if (typeof window === "undefined" || location.hostname === "localhost") return;

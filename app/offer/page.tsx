@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { OfferChecker } from "@/components/OfferChecker";
 import { meta } from "@/lib/data";
 
@@ -15,6 +16,12 @@ export default function OfferPage() {
         <h1 className="text-3xl font-black sm:text-4xl">這個 offer 算高還是低？</h1>
         <p className="mt-2 max-w-2xl text-ink-2">
           和同公司、同職務、相近年資的 {meta.total.toLocaleString()} 筆分享比對，告訴你偏低、合理還是偏高，以及這個結論有多可信。
+        </p>
+        <p className="mt-1 text-sm">
+          手上不只一份？
+          <Link href="/offer/compare/" className="ml-1 font-medium text-accent underline">
+            試算每份 offer 的 4 年總薪酬
+          </Link>
         </p>
       </header>
       <OfferChecker roleLabels={meta.roleLabels} />

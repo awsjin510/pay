@@ -83,6 +83,10 @@ export default function Home() {
             <Link href="/offer/" className="ml-1 font-medium text-accent underline">
               檢查它算高還是低
             </Link>
+            <span className="mx-1.5 text-ink-3">／</span>
+            <Link href="/offer/compare/" className="font-medium text-accent underline">
+              比較多份 offer 的 4 年總額
+            </Link>
           </p>
           <div className="mt-3 flex max-w-xl flex-wrap items-center gap-2 text-sm">
             <span className="text-ink-3">常被查：</span>

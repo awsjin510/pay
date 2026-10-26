@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WantToKnow } from "@/components/WantToKnow";
 import { fmtWan, meta, trackLabel, type Company, type Track } from "@/lib/data";
 
 // A company page without enough data still answers something: how close it is to having
@@ -27,6 +28,8 @@ export function ThinCompany({ company, similar, similarLabel, track }: { company
           </Link>
         </div>
       </div>
+
+      <WantToKnow slug={company.slug} name={company.name} />
 
       {track?.stats?.monthly && (
         <div className="border-t border-border pt-4">

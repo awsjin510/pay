@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ShareCard, type ShareResult } from "@/components/ShareCard";
 import { toWan, WanInput } from "@/components/WanInput";
+import { OVERTIME_PAY_LABELS } from "@/lib/labels";
 import { track } from "@/lib/track";
 
 type Status = { state: "idle" | "sending" | "done" | "error"; message?: string };
@@ -34,6 +35,21 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       {children}
       {hint && <span className="mt-1 block text-xs text-ink-3">{hint}</span>}
     </label>
+  );
+}
+
+function Group({ title, hint, children }: { title: string; hint: string; children: React.ReactNode }) {
+  return (
+    <details className="group rounded-xl border border-border bg-surface px-4 py-3">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-medium sm:min-h-0">
+        <span aria-hidden="true" className="text-ink-3 transition-transform group-open:rotate-90">
+          ▸
+        </span>
+        {title}
+        <span className="font-normal text-ink-3">{hint}</span>
+      </summary>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
+    </details>
   );
 }
 
@@ -261,35 +277,69 @@ export function SubmitForm() {
         </Field>
       </div>
 
-      <details className="rounded-xl border border-border bg-surface px-4 py-3">
-        <summary className="cursor-pointer text-sm font-medium">填更多細節（選填，讓資料更有參考價值）</summary>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="職級" hint="例如 E7、L4">
-            <input name="level" maxLength={30} className={input} />
-          </Field>
-          <Field label="現職年資（年）">
-            <input name="yoe_current" type="number" inputMode="decimal" min={0} max={50} step={0.5} className={input} />
-          </Field>
-          <Field label="總年薪（萬，含分紅）">
-            <input name="annual" type="number" inputMode="decimal" min={15} max={3000} step={1} className={input} />
-          </Field>
-          <Field label="每日平均工時（小時）">
-            <input name="hours_per_day" type="number" inputMode="decimal" min={1} max={16} step={0.5} className={input} />
-          </Field>
-          <Field label="每月加班（小時）">
-            <input name="overtime_per_month" type="number" inputMode="decimal" min={0} max={250} step={1} className={input} />
-          </Field>
-          <Field label="加班頻率（1 很少 – 5 很常）">
-            <input name="overtime_freq" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
-          </Field>
-          <Field label="爽度（1–5，5 最爽）">
-            <input name="happiness" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
-          </Field>
-          <Field label="Loading（1–5，5 最重）">
-            <input name="loading" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
-          </Field>
-        </div>
-        <div className="mt-4 space-y-4">
+      <p className="text-xs text-ink-3">以下都是選填。薪酬組成和工作條件只會以 3 筆以上的統計公開，不會出現在單筆分享裡。</p>
+      <Group title="薪酬組成" hint="分紅、股票、簽約金">
+        <Field label="員工酬勞／分紅（萬／年）" hint="去年實際拿到的金額">
+          <input name="profit_sharing" type="number" inputMode="decimal" min={0} max={2000} step="any" className={input} />
+        </Field>
+        <Field label="股票（萬／年）" hint="RSU 等，平均每年歸屬的價值">
+          <input name="stock_yearly" type="number" inputMode="decimal" min={0} max={3000} step="any" className={input} />
+        </Field>
+        <Field label="簽約金（萬，一次性）">
+          <input name="sign_on" type="number" inputMode="decimal" min={0} max={500} step="any" className={input} />
+        </Field>
+        <Field label="總年薪（萬，含分紅）">
+          <input name="annual" type="number" inputMode="decimal" min={15} max={3000} step={1} className={input} />
+        </Field>
+      </Group>
+      <Group title="工作條件" hint="工時、加班費、遠端、特休">
+        <Field label="每週實際工時（小時）" hint="含加班，平均一週">
+          <input name="weekly_hours" type="number" inputMode="decimal" min={10} max={100} step={1} className={input} />
+        </Field>
+        <Field label="加班費">
+          <select name="overtime_pay" defaultValue="" className={input}>
+            <option value="">不填</option>
+            {Object.entries(OVERTIME_PAY_LABELS).map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="每月加班（小時）">
+          <input name="overtime_per_month" type="number" inputMode="decimal" min={0} max={250} step={1} className={input} />
+        </Field>
+        <Field label="加班頻率（1 很少 – 5 很常）">
+          <input name="overtime_freq" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
+        </Field>
+        <Field label="每週可遠端（天）">
+          <select name="remote_days" defaultValue="" className={input}>
+            <option value="">不填</option>
+            {[0, 1, 2, 3, 4, 5].map((d) => (
+              <option key={d} value={d}>
+                {d === 0 ? "不能遠端" : d === 5 ? "全遠端" : `${d} 天`}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="每年特休（天）">
+          <input name="leave_days" type="number" inputMode="numeric" min={0} max={60} step={1} className={input} />
+        </Field>
+      </Group>
+      <Group title="其他細節" hint="職級、爽度、證照、面試、心得">
+        <Field label="職級" hint="例如 E7、L4">
+          <input name="level" maxLength={30} className={input} />
+        </Field>
+        <Field label="現職年資（年）">
+          <input name="yoe_current" type="number" inputMode="decimal" min={0} max={50} step={0.5} className={input} />
+        </Field>
+        <Field label="爽度（1–5，5 最爽）">
+          <input name="happiness" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
+        </Field>
+        <Field label="Loading（1–5，5 最重）">
+          <input name="loading" type="number" inputMode="decimal" min={1} max={5} step={1} className={input} />
+        </Field>
+        <div className="space-y-4 sm:col-span-2">
           <Field label="證照（雲端／資安）" hint="例如 AWS SAA、CKA、OSCP、CISSP">
             <input name="certifications" maxLength={120} className={input} />
           </Field>
@@ -300,7 +350,7 @@ export function SubmitForm() {
             <textarea name="comment" maxLength={1000} rows={4} className={input} />
           </Field>
         </div>
-      </details>
+      </Group>
 
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="agree" required className="mt-1" />

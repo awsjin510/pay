@@ -1,6 +1,7 @@
+import { ConditionFacts, estimateRow } from "@/components/Conditions";
 import { YearMix } from "@/components/DataNotes";
 import { Payslip, type PayslipRow } from "@/components/Payslip";
-import type { Stats } from "@/lib/data";
+import type { Estimate, Stats } from "@/lib/data";
 
 const Fact = ({ label, value, hint }: { label: string; value: string; hint?: string }) => (
   <div className="flex items-baseline justify-between gap-3 border-b border-border py-2.5 last:border-0">
@@ -19,6 +20,7 @@ export function StatsHero({
   extraRows = [],
   recent,
   recentFromYear,
+  estimate,
   footnote,
   children,
 }: {
@@ -27,6 +29,7 @@ export function StatsHero({
   extraRows?: PayslipRow[];
   recent?: Stats | null;
   recentFromYear: number;
+  estimate?: Estimate | null;
   footnote?: React.ReactNode;
   children?: React.ReactNode;
 }) {
@@ -34,7 +37,7 @@ export function StatsHero({
   if (stats.monthly) rows.push({ label: "月底薪（中位數）", value: String(stats.monthly.median), unit: "萬", emphasis: true, note: `中間一半落在 ${stats.monthly.p25}–${stats.monthly.p75} 萬` });
   if (stats.bonusMonths) rows.push({ label: "年終＋獎金", value: String(stats.bonusMonths.median), unit: "個月", note: "不含分紅" });
   if (stats.annual) rows.push({ label: "總年薪（中位數）", value: String(stats.annual.median), unit: "萬", note: "含分紅，自行回報" });
-  rows.push(...extraRows);
+  rows.push(...estimateRow(estimate), ...extraRows);
 
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
@@ -47,6 +50,7 @@ export function StatsHero({
           {stats.loading != null && <Fact label="Loading" value={String(stats.loading)} hint="／5，越高越重" />}
           {recent?.monthly && <Fact label={`${recentFromYear} 年後月底薪`} value={String(recent.monthly.median)} hint={`萬（${recent.n} 筆）`} />}
         </dl>
+        <ConditionFacts stats={stats} />
         <YearMix stats={stats} />
         {children}
       </div>

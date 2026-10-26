@@ -27,6 +27,7 @@ const WEB_SUBMISSIONS_URL = process.env.WEB_SUBMISSIONS_URL ?? `${SITE}/api/appr
 const MIN_N = 3;
 const RECENT_FROM_YEAR = 2025;
 const TODAY = new Date().toISOString().slice(0, 10);
+const THIS_YEAR = Number(TODAY.slice(0, 4));
 
 const COMPANIES_BY_NAME = new Map(COMPANIES.map((c) => [c.name, c]));
 
@@ -69,6 +70,18 @@ async function fetchWebSubmissions() {
     console.log("fetched web submissions");
   } catch (e) {
     console.warn(`web submissions not fetched (${e.message}); using cache if any`);
+  }
+}
+
+// 「我也想知道這家」 counts, for the 「大家最想知道」 list on the share page.
+async function fetchWants() {
+  try {
+    const res = await fetch(`${SITE}/api/wants/top`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await writeFile(new URL("wants.json", RAW_DIR), JSON.stringify(await res.json()));
+    console.log("fetched wants");
+  } catch (e) {
+    console.warn(`wants not fetched (${e.message}); using cache if any`);
   }
 }
 
@@ -232,6 +245,7 @@ function summarize(all) {
     happiness: mean(rows.map((r) => r.happiness)),
     loading: mean(rows.map((r) => r.loading)),
     overtimeFreq: mean(rows.map((r) => r.overtimeFreq)),
+    ...conditions(rows),
     recentN: rows.filter((r) => r.year >= RECENT_FROM_YEAR).length,
     years: yearMix(rows),
     byLevel: LEVEL_BANDS.map((b) => {
@@ -239,6 +253,35 @@ function summarize(all) {
       return { level: b.id, n: rows.filter((r) => r.level === b.id).length, monthly: dist(sub.map((r) => r.monthly), 1), annual: dist(sub.map(annualOf), 0) };
     }),
   };
+}
+
+// Structured fields from web submissions. Each is published only as an aggregate of MIN_N+
+// answers; a lone answer is never shown (see 0004_comp_wants.sql).
+const OVERTIME_PAY = ["legal", "comp", "partial", "none", "rare"];
+function conditions(rows) {
+  const c = rows.map((r) => r.private).filter(Boolean);
+  const answered = c.filter((x) => x.overtimePay);
+  return {
+    profitSharing: dist(c.map((x) => x.profitSharing), 1),
+    stockYearly: dist(c.map((x) => x.stockYearly), 1),
+    signOn: dist(c.map((x) => x.signOn), 1),
+    weeklyHours: dist(c.map((x) => x.weeklyHours), 0),
+    remoteDays: dist(c.map((x) => x.remoteDays), 1),
+    leaveDays: dist(c.map((x) => x.leaveDays), 0),
+    overtimePay: answered.length >= MIN_N ? Object.fromEntries(OVERTIME_PAY.map((k) => [k, answered.filter((x) => x.overtimePay === k).length])) : null,
+  };
+}
+
+// 推估到今年: each row's 月底薪 grown by the listed companies' typical yearly raise for the
+// years since it was reported. A labelled estimate, never presented as the company's pay.
+function estimateNow(rows, growth) {
+  const pay = rows.filter((r) => !isOutlier(r) && !isOffer(r) && r.monthly != null && r.year);
+  if (pay.length < MIN_N || growth == null) return null;
+  const years = pay.map((r) => r.year).sort((a, b) => a - b);
+  const medianYear = years[Math.floor(years.length / 2)];
+  if (medianYear >= THIS_YEAR) return null;
+  const v = pay.map((r) => r.monthly * (1 + growth / 100) ** Math.max(0, THIS_YEAR - r.year)).sort((a, b) => a - b);
+  return { year: THIS_YEAR, monthly: round(quantile(v, 0.5), 1), growth, medianYear };
 }
 
 // A salary far outside its own company's spread (3 IQRs and more than 2× / under ½ the
@@ -296,6 +339,10 @@ async function webRecords() {
     monthly: r.monthly, bonus: r.bonus_months, annual: r.annual, hours: r.hours_per_day, overtime: r.overtime_per_month,
     overtimeFreq: r.overtime_freq, happiness: r.happiness, loading: r.loading, comment: r.comment ?? "",
     certifications: r.certifications || null, interviewTopics: r.interview_topics || null,
+    private: {
+      profitSharing: r.profit_sharing, stockYearly: r.stock_yearly, signOn: r.sign_on, weeklyHours: r.weekly_hours,
+      overtimePay: OVERTIME_PAY.includes(r.overtime_pay) ? r.overtime_pay : null, remoteDays: r.remote_days, leaveDays: r.leave_days,
+    },
   }));
 }
 
@@ -334,6 +381,7 @@ async function main() {
     await fetchMol(RAW_DIR);
     await fetchJobs(RAW_DIR);
     await fetchWebSubmissions();
+    await fetchWants();
     await fetchOgFont();
   }
   const aliases = buildAliasIndex();
@@ -369,7 +417,19 @@ async function main() {
     const monthly = cleanMonthly(rec.monthly, flags);
     const bonusMonths = cleanBonus(rec.bonus, flags);
     const annual = cleanAnnual(rec.annual, flags);
-    const annualEstimate = annual == null && monthly != null && bonusMonths != null ? round(monthly * (12 + bonusMonths), 1) : null;
+    const priv = rec.private
+      ? {
+          profitSharing: inRange(rec.private.profitSharing, 0, 2000),
+          stockYearly: inRange(rec.private.stockYearly, 0, 3000),
+          signOn: inRange(rec.private.signOn, 0, 500),
+          weeklyHours: inRange(rec.private.weeklyHours, 10, 100),
+          overtimePay: rec.private.overtimePay,
+          remoteDays: inRange(rec.private.remoteDays, 0, 5),
+          leaveDays: inRange(rec.private.leaveDays, 0, 60),
+        }
+      : null;
+    const extra = (priv?.profitSharing ?? 0) + (priv?.stockYearly ?? 0);
+    const annualEstimate = annual == null && monthly != null && bonusMonths != null ? round(monthly * (12 + bonusMonths) + extra, 1) : null;
     if (annualEstimate != null) flags.push("annual_estimated");
     // 總年薪 includes 分紅, so it may legitimately exceed 月薪×(12+Bonus); only a total below
     // twelve months of base pay, or more than 4× the estimate, is implausible.
@@ -419,6 +479,8 @@ async function main() {
       date,
       year: date ? Number(date.slice(0, 4)) : null,
       flags,
+      // Aggregated by conditions(), then removed before submissions.json is written.
+      private: priv,
     };
     submissions.push(row);
     if (companyKey) {
@@ -441,6 +503,10 @@ async function main() {
   }
 
   const official = await readOfficial(RAW_DIR);
+  // Typical yearly raise: median 非主管薪資中位數變動 across every listed / OTC company (one
+  // company's change swings with its bonus year), held to 0–6%.
+  const changes = official.map((o) => parseFloat(o.medianChange)).filter(Number.isFinite).sort((a, b) => a - b);
+  const growth = changes.length >= 100 ? round(Math.min(6, Math.max(0, quantile(changes, 0.5))), 1) : null;
   const officialByKey = new Map();
   for (const o of official) {
     const known = aliases.global.get(normalizeKey(o.name));
@@ -484,6 +550,7 @@ async function main() {
     });
   }
   for (const s of submissions) delete s.companyKey;
+  for (const c of companyList) c.estimate = estimateNow(submissions.filter((s) => s.company === c.slug), growth);
   companyList.sort((a, b) => b.n - a.n);
 
   const tracks = TABS.filter((t) => t.track).map((t) => {
@@ -493,6 +560,7 @@ async function main() {
       label: t.label,
       stats: summarize(rows),
       recentStats: summarize(rows.filter((s) => s.year >= RECENT_FROM_YEAR)),
+      estimate: estimateNow(rows, growth),
       monthlyValues: monthlyValues(rows),
       curve: yoeCurve(rows),
       roles: [...ROLES, OTHER_ROLE]
@@ -630,6 +698,7 @@ async function main() {
     namedCompanies: companyList.length,
     anonymousRows: submissions.filter((s) => !s.company).length,
     official: { year: officialYear, companies: official.length, matched: companyList.filter((c) => c.official).length },
+    estimate: { year: THIS_YEAR, growth, basis: changes.length },
     mol: mol ? { year: mol.year, annualYear: mol.annualYear } : null,
     itServices: { listed: itServices.listed.length, crowdRows: itRows.length, jobs: jobs.length },
     years: Object.fromEntries(
@@ -641,7 +710,7 @@ async function main() {
     trackLabels: Object.fromEntries(TABS.filter((t) => t.track).map((t) => [t.track, t.label])),
   };
 
-  await writeFile(new URL("submissions.json", OUT_DIR), JSON.stringify(submissions));
+  await writeFile(new URL("submissions.json", OUT_DIR), JSON.stringify(submissions, (k, v) => (k === "private" ? undefined : v)));
   await writeFile(new URL("companies.json", OUT_DIR), JSON.stringify(companyList));
   await writeFile(new URL("tracks.json", OUT_DIR), JSON.stringify(tracks));
   await writeFile(new URL("roles.json", OUT_DIR), JSON.stringify(roles));
@@ -649,6 +718,11 @@ async function main() {
   await writeFile(new URL("sectors.json", OUT_DIR), JSON.stringify(sectors));
   await writeFile(new URL("it-services.json", OUT_DIR), JSON.stringify(itServices));
   await writeFile(new URL("meta.json", OUT_DIR), JSON.stringify(meta, null, 2));
+  const wanted = (await readJson("wants.json", []))
+    .map((w) => ({ ...w, c: companyBySlug.get(w.slug) }))
+    .filter((w) => w.c && !w.c.stats)
+    .map((w) => ({ slug: w.slug, name: w.c.name, n: w.c.n, count: w.count }));
+  await writeFile(new URL("wants.json", OUT_DIR), JSON.stringify(wanted));
 
   // Global search (Ctrl+K) loads this on demand instead of inlining 700+ companies in every page.
   await writeFile(

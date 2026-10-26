@@ -6,6 +6,8 @@ import rolesJson from "@/data/roles.json";
 import sectorsJson from "@/data/sectors.json";
 import submissionsJson from "@/data/submissions.json";
 import tracksJson from "@/data/tracks.json";
+import wantsJson from "@/data/wants.json";
+import type { OvertimePay } from "@/lib/labels";
 
 export type TrackId = "soft" | "system" | "ic";
 
@@ -25,10 +27,23 @@ export type Stats = {
   happiness: number | null;
   loading: number | null;
   overtimeFreq: number | null;
+  // Structured web-submission fields; each null until 3+ people answered it.
+  profitSharing: Dist | null;
+  stockYearly: Dist | null;
+  signOn: Dist | null;
+  weeklyHours: Dist | null;
+  remoteDays: Dist | null;
+  leaveDays: Dist | null;
+  overtimePay: Record<OvertimePay, number> | null;
   recentN: number;
   years: Record<string, number>;
   byLevel: LevelStats[];
 };
+
+export { OVERTIME_PAY_LABELS, type OvertimePay } from "@/lib/labels";
+
+// 推估到今年: rows grown by the listed companies' median yearly raise. Always shown as 推估.
+export type Estimate = { year: number; monthly: number; growth: number; medianYear: number };
 
 export type Official = {
   code: string;
@@ -57,6 +72,7 @@ export type Company = {
   official: Official | null;
   stats: Stats | null;
   recentStats: Stats | null;
+  estimate: Estimate | null;
   monthlyValues: number[];
   curve: CurvePoint[];
   offers: { n: number; median: number | null; latest: string | null } | null;
@@ -102,6 +118,7 @@ export type Track = {
   label: string;
   stats: Stats | null;
   recentStats: Stats | null;
+  estimate: Estimate | null;
   monthlyValues: number[];
   curve: CurvePoint[];
   roles: { role: string; stats: Stats }[];
@@ -201,6 +218,8 @@ export const itServices = itServicesJson as unknown as ItServices;
 
 export const INDUSTRY_LABELS: Record<string, string> = { "30": "資訊服務業", "36": "數位雲端" };
 export const meta = metaJson;
+// Sparse companies people asked about most (「我也想知道這家」), refreshed by the weekly sync.
+export const wanted = wantsJson as unknown as { slug: string; name: string; n: number; count: number }[];
 
 export const TRACK_IDS: TrackId[] = ["soft", "system", "ic"];
 export const trackLabel = (id: string) => (meta.trackLabels as Record<string, string>)[id] ?? id;

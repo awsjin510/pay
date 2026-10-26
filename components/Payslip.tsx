@@ -8,6 +8,8 @@ export type PayslipRow = {
   note?: string;
   official?: boolean;
   emphasis?: boolean;
+  // A computed estimate, not reported pay: marked 推估 and set in a lighter ink.
+  estimate?: boolean;
 };
 
 export function Payslip({
@@ -42,9 +44,10 @@ export function Payslip({
               <dt className={`flex items-center gap-2 ${r.emphasis ? "font-medium" : "text-ink-2"}`}>
                 {r.label}
                 {r.official && <span className="seal">官方</span>}
+                {r.estimate && <span className="rounded border border-dashed border-ink-3 px-1 text-[11px] leading-4 text-ink-2">推估</span>}
               </dt>
               <span className="leader" aria-hidden="true" />
-              <dd className={`num whitespace-nowrap ${r.emphasis ? "text-3xl font-semibold" : "text-xl font-medium"} ${r.official ? "text-seal" : ""}`}>
+              <dd className={`num whitespace-nowrap ${r.emphasis ? "text-3xl font-semibold" : "text-xl font-medium"} ${r.official ? "text-seal" : ""} ${r.estimate ? "text-ink-2" : ""}`}>
                 {r.value}
                 {r.unit && <span className="ml-1 font-sans text-sm font-normal text-ink-2">{r.unit}</span>}
               </dd>

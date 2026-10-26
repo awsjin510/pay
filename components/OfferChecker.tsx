@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OFFER_PREFILL_KEY, type OfferPrefill } from "@/components/Forms";
+import { Negotiation } from "@/components/Negotiation";
 import { Payslip } from "@/components/Payslip";
 import { toWan, WanInput } from "@/components/WanInput";
 import { track } from "@/lib/track";
@@ -32,6 +33,10 @@ type Result = {
   annual: number;
   annualAssumed: boolean;
 };
+
+// Handed over by the total-comp calculator through sessionStorage (never in the URL).
+export type OfferCheckPrefill = { company: string; monthly: string; bonus: string };
+export const OFFER_CHECK_KEY = "offerCheckPrefill";
 
 const TRACK_LABELS: Record<string, string> = { soft: "純軟", system: "系統廠", ic: "IC 設計" };
 const VERDICT = { low: "偏低", fair: "合理", high: "偏高" } as const;
@@ -112,9 +117,26 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
       const slug = new URLSearchParams(window.location.search).get("company");
       const hit = slug ? d[1].find((e) => e.s === slug) : undefined;
       const form = formRef.current;
-      if (hit && form) {
-        (form.elements.namedItem("company") as HTMLInputElement).value = hit.n;
-        (form.elements.namedItem("track") as HTMLSelectElement).value = hit.t;
+      if (!form) return;
+      const set = (name: string, value: string) => ((form.elements.namedItem(name) as HTMLInputElement).value = value);
+      if (hit) {
+        set("company", hit.n);
+        set("track", hit.t);
+      }
+      let pre: OfferCheckPrefill | null = null;
+      try {
+        pre = JSON.parse(sessionStorage.getItem(OFFER_CHECK_KEY) ?? "null");
+        sessionStorage.removeItem(OFFER_CHECK_KEY);
+      } catch {
+        pre = null;
+      }
+      if (pre) {
+        const known = pre.company ? d[1].find((e) => [e.n, e.e ?? "", ...e.a].some((x) => norm(x) === norm(pre.company))) : undefined;
+        set("company", known?.n ?? pre.company);
+        if (known) set("track", known.t);
+        set("monthly", pre.monthly);
+        set("bonus", pre.bonus);
+        (form.elements.namedItem(pre.company ? "yoe" : "company") as HTMLElement).focus();
       }
     });
   }, []);
@@ -270,6 +292,15 @@ export function OfferChecker({ roleLabels }: { roleLabels: Record<string, string
                 </button>
               </p>
             )}
+            <Negotiation
+              monthly={Number(last?.monthly)}
+              p25={result.p25}
+              median={result.median}
+              p75={result.p75}
+              verdict={result.verdict}
+              confidence={result.confidence}
+              basis={result.level.label}
+            />
             <div className="rounded-xl border border-accent bg-accent-soft p-4">
               <p className="font-medium">讓下一個人也查得到</p>
               <p className="mt-1 text-sm text-ink-2">匿名分享這個 offer（剛填的欄位會自動帶入），{result.confidence !== "high" ? "這裡的資料還不多，你的一筆影響很大。" : "幫資料保持新鮮。"}</p>

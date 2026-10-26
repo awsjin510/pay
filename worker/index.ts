@@ -8,7 +8,7 @@ interface D1PreparedStatement {
   bind(...values: unknown[]): D1PreparedStatement;
   first<T>(): Promise<T | null>;
   all<T>(): Promise<D1Result<T>>;
-  run(): Promise<unknown>;
+  run(): Promise<{ meta?: { changes?: number } }>;
 }
 interface D1Database {
   prepare(sql: string): D1PreparedStatement;
@@ -78,7 +78,12 @@ async function createSubmission(request: Request, env: Env) {
   const comment = str(b.comment, "心得", 1000);
   const ref = typeof b.ref === "string" ? b.ref.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40) || null : null;
   const kind = b.kind === "offer" ? "offer" : "current";
-  const auto = autoApprovable({ company, role, monthly, bonus, annual, freeText: [certifications, interviewTopics, comment] });
+  const profitSharing = numIn(b.profit_sharing, "員工酬勞", 0, 2000);
+  const stockYearly = numIn(b.stock_yearly, "股票", 0, 3000);
+  const signOn = numIn(b.sign_on, "簽約金", 0, 500);
+  const overtimePay = b.overtime_pay == null || b.overtime_pay === "" ? null : String(b.overtime_pay);
+  if (overtimePay && !OVERTIME_PAY.includes(overtimePay)) throw new Invalid("加班費選項不正確");
+  const auto = autoApprovable({ company, role, monthly, bonus, annual, profitSharing, stockYearly, signOn, freeText: [certifications, interviewTopics, comment] });
 
   const hash = await ipHash(request);
   if (await overLimit(env.pay_db, "submissions", hash)) return json({ error: "今天投稿次數已達上限，請明天再試" }, 429);
@@ -86,8 +91,9 @@ async function createSubmission(request: Request, env: Env) {
     .prepare(
       `INSERT INTO submissions (track, company, role, level, yoe, yoe_current, monthly, bonus_months, annual,
         hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment,
-        ip_hash, ref, status, auto_approved, kind)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ip_hash, ref, status, auto_approved, kind,
+        profit_sharing, stock_yearly, sign_on, weekly_hours, overtime_pay, remote_days, leave_days)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       track,
@@ -112,6 +118,13 @@ async function createSubmission(request: Request, env: Env) {
       auto ? "approved" : "pending",
       auto ? 1 : 0,
       kind,
+      profitSharing,
+      stockYearly,
+      signOn,
+      numIn(b.weekly_hours, "每週工時", 10, 100),
+      overtimePay,
+      numIn(b.remote_days, "遠端天數", 0, 5),
+      numIn(b.leave_days, "特休天數", 0, 60),
     )
     .run();
   return json({ ok: true, status: auto ? "approved" : "pending" }, 201);
@@ -120,7 +133,18 @@ async function createSubmission(request: Request, env: Env) {
 // Numbers-only submissions with plausible values skip the queue; anything with free text
 // (心得, 證照, 面試題型) or odd numbers waits for a person. Weekly sync publishes approved rows.
 const CONTACT_OR_LINK = /https?:|www\.|@|\d{4}[-\s]?\d{3}[-\s]?\d{3}/i;
-function autoApprovable(x: { company: string; role: string; monthly: number; bonus: number | null; annual: number | null; freeText: (string | null)[] }) {
+const OVERTIME_PAY = ["legal", "comp", "partial", "none", "rare"];
+function autoApprovable(x: {
+  company: string;
+  role: string;
+  monthly: number;
+  bonus: number | null;
+  annual: number | null;
+  profitSharing: number | null;
+  stockYearly: number | null;
+  signOn: number | null;
+  freeText: (string | null)[];
+}) {
   if (x.freeText.some(Boolean)) return false;
   if (CONTACT_OR_LINK.test(x.company) || CONTACT_OR_LINK.test(x.role)) return false;
   if (/^\d+$/.test(x.company) || x.company.length < 2) return false;
@@ -130,6 +154,9 @@ function autoApprovable(x: { company: string; role: string; monthly: number; bon
     const est = x.monthly * (12 + (x.bonus ?? 0));
     if (x.annual < x.monthly * 12 * 0.9 || x.annual > est * 4) return false;
   }
+  // Equity and profit sharing can dwarf base pay at a few companies; those get a human look.
+  if ((x.profitSharing ?? 0) + (x.stockYearly ?? 0) > x.monthly * 36) return false;
+  if (x.signOn != null && x.signOn > x.monthly * 6) return false;
   return true;
 }
 
@@ -154,6 +181,7 @@ async function createReport(request: Request, env: Env) {
 const EVENTS = new Set([
   "answer_view", "thin_view", "search_select", "search_empty", "submit_view", "submit_start", "submit_success",
   "submit_error", "share_click", "share_download", "offer_view", "offer_check", "offer_share_click", "compare_used",
+  "want_click", "invite_click", "calc_view", "calc_compute", "calc_check_click", "negotiate_copy",
 ]);
 const clean = (v: unknown, max: number) => (typeof v === "string" ? v.toLowerCase().replace(/[^a-z0-9:_-]/g, "").slice(0, max) : "");
 
@@ -185,10 +213,57 @@ async function listApproved(env: Env) {
   const { results } = await env.pay_db
     .prepare(
       `SELECT id, created_at, track, company, role, level, yoe, yoe_current, monthly, bonus_months, annual,
-        hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment, kind
+        hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment, kind,
+        profit_sharing, stock_yearly, sign_on, weekly_hours, overtime_pay, remote_days, leave_days
        FROM submissions WHERE status = 'approved' ORDER BY id`,
     )
     .all();
+  return json(results, 200, { "cache-control": "public, max-age=300" });
+}
+
+// 「我也想知道這家」. Slugs are checked against the published search index, so the table
+// only ever holds real company pages.
+let slugCache: Promise<Set<string>> | null = null;
+function knownSlugs(request: Request, env: Env) {
+  slugCache ??= env.ASSETS.fetch(new Request(new URL("/search-index.json", request.url)))
+    .then((r) => r.json() as Promise<{ s: string }[]>)
+    .then((rows) => new Set(rows.map((r) => r.s)))
+    .catch((e) => {
+      slugCache = null;
+      throw e;
+    });
+  return slugCache;
+}
+
+const MAX_WANTS_PER_DAY = 30;
+
+async function addWant(request: Request, env: Env) {
+  const b = (await request.json()) as Record<string, unknown>;
+  const slug = typeof b.slug === "string" ? b.slug : "";
+  if (!(await knownSlugs(request, env)).has(slug)) throw new Invalid("找不到這間公司");
+  const hash = await ipHash(request);
+  const today = await env.pay_db
+    .prepare("SELECT COUNT(*) AS n FROM want_votes WHERE day = date('now') AND ip_hash = ?")
+    .bind(hash)
+    .first<{ n: number }>();
+  if ((today?.n ?? 0) < MAX_WANTS_PER_DAY) {
+    const res = await env.pay_db.prepare("INSERT OR IGNORE INTO want_votes (day, ip_hash, slug) VALUES (date('now'), ?, ?)").bind(hash, slug).run();
+    if (res.meta?.changes) {
+      await env.pay_db.prepare("INSERT INTO wants (slug, count) VALUES (?, 1) ON CONFLICT (slug) DO UPDATE SET count = count + 1").bind(slug).run();
+      await env.pay_db.prepare("DELETE FROM want_votes WHERE day < date('now', '-2 day')").run();
+    }
+  }
+  return wantCount(env, slug);
+}
+
+async function wantCount(env: Env, slug: string) {
+  const row = await env.pay_db.prepare("SELECT count FROM wants WHERE slug = ?").bind(slug).first<{ count: number }>();
+  return json({ slug, count: row?.count ?? 0 }, 200, { "cache-control": "no-store" });
+}
+
+// Read by the site build for the 「大家最想知道」 list.
+async function topWants(env: Env) {
+  const { results } = await env.pay_db.prepare("SELECT slug, count FROM wants WHERE count >= 2 ORDER BY count DESC LIMIT 30").all();
   return json(results, 200, { "cache-control": "public, max-age=300" });
 }
 
@@ -201,6 +276,9 @@ const worker = {
       if (pathname === "/api/approved" && request.method === "GET") return await listApproved(env);
       if (pathname === "/api/pending-count" && request.method === "GET") return await pendingCount(env);
       if (pathname === "/api/events" && request.method === "POST") return await recordEvent(request, env);
+      if (pathname === "/api/wants" && request.method === "POST") return await addWant(request, env);
+      if (pathname === "/api/wants" && request.method === "GET") return await wantCount(env, new URL(request.url).searchParams.get("slug") ?? "");
+      if (pathname === "/api/wants/top" && request.method === "GET") return await topWants(env);
       if (pathname.startsWith("/api/")) return json({ error: "not found" }, 404);
       return env.ASSETS.fetch(request);
     } catch (e) {
