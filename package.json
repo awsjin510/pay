@@ -7,7 +7,8 @@
     "data:fetch": "node etl/build.mjs --fetch",
     "dev": "next dev",
     "build": "next build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "next build && wrangler deploy"
   },
   "dependencies": {
     "next": "16.4.3",
@@ -22,6 +23,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.152.0"
   }
 }

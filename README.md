@@ -14,6 +14,15 @@ npm run build        # 靜態檔輸出到 out/
 
 `npm run data` 只用 `data/raw/` 裡已快取的 CSV 重新清理，不連網。
 
+## 部署
+
+網站部署在 Cloudflare Workers（靜態資產），網址 <https://pay.operation.tw>，設定在 `wrangler.jsonc`。
+
+```bash
+npx wrangler login   # 第一次需要授權
+npm run deploy       # 建置並上傳 out/
+```
+
 ## 資料流程（`etl/`）
 
 | 檔案 | 用途 |

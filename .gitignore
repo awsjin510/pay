@@ -42,3 +42,4 @@ next-env.d.ts
 
 # raw sheet snapshots contain unmoderated comments; regenerate with `npm run data:fetch`
 /data/raw/
+.wrangler/

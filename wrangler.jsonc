@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Static assets only: `npm run build` writes the site to out/, Cloudflare serves it as-is.
+  "name": "pay",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  },
+  "routes": [{ "pattern": "pay.operation.tw", "custom_domain": true }]
+}
