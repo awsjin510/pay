@@ -8,13 +8,18 @@
 //   npm run review -- stats             # submissions by status, by ref (?ref=…) and by week
 //   npm run review -- funnel 28         # product funnel and North Star for the last N days
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const DB = "pay-db";
 
+// Run wrangler's JS entry with Node directly: no shell, so the SQL reaches wrangler as one
+// argument on Windows too.
+const WRANGLER = fileURLToPath(new URL("../node_modules/wrangler/bin/wrangler.js", import.meta.url));
+
 function sql(command) {
-  const out = execFileSync("npx", ["wrangler", "d1", "execute", DB, "--remote", "--json", "--command", command], {
+  const out = execFileSync(process.execPath, [WRANGLER, "d1", "execute", DB, "--remote", "--json", "--command", command], {
     encoding: "utf8",
-    shell: process.platform === "win32",
+    stdio: ["ignore", "pipe", "pipe"],
   });
   return JSON.parse(out)[0]?.results ?? [];
 }
