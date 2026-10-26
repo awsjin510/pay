@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { OccupationRef as Ref } from "@/lib/data";
 
-// Industries worth showing next to tech roles; media sub-industries are left out.
-const SHOWN = ["電腦程式設計、諮詢及相關服務業", "資料處理及資訊供應服務業", "電信業", "出版影音及資通訊業（全體）"];
+// Industries worth showing next to tech roles; media and the broad totals are left out.
+const SHOWN = ["電腦程式設計、諮詢及相關服務業", "資訊服務業", "電子零組件製造業", "金融及保險業", "電信業"];
 
 export function OccupationRef({ data, crowdMonthly }: { data: Ref; crowdMonthly?: number | null }) {
   const rows = data.rows.filter((r) => SHOWN.includes(r.industry)).sort((a, b) => SHOWN.indexOf(a.industry) - SHOWN.indexOf(b.industry));

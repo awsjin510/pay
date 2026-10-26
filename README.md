@@ -20,6 +20,7 @@ npm run preview      # 建置後用 wrangler dev 跑頁面＋API＋本機 D1：h
 
 ## 部署
 
+- **每週同步**：GitHub Actions（`.github/workflows/sync-data.yml`）每週一 09:00 重新抓所有來源，資料有變才 commit 到 `main`，可在 Actions 頁手動執行。
 - **自動**：Cloudflare Workers Builds 連接本 repo，push 到 `main` 會執行 `npm run data:fetch && npm run build` 再 `npx wrangler deploy`。
   建置紀錄在 Cloudflare Dashboard → Workers 和 Pages → pay → 部署。Node 版本由 `.node-version` 指定。
 - **手動**：`npx wrangler login` 後執行 `npm run deploy`。
@@ -45,7 +46,9 @@ npm run review -- resolve 2       # 回報結案
 | `companies.mjs` | 公司正式名稱、別名、PTT 代號（查證來源寫在檔案開頭）、雲端／資安公司標記 |
 | `roles.mjs` | 自由填寫的職務 → 職務分類；相關年資 → 年資分段 |
 | `sectors.mjs` | 雲端／資安職務判斷與細分（SRE、資安研究員、SOC…） |
-| `official.mjs` | 證交所／櫃買中心開放資料：非擔任主管全時員工薪資 |
+| `official.mjs` | 證交所／櫃買中心開放資料：非擔任主管全時員工薪資、產業別 |
+| `mol.mjs` | 勞動部職類別薪資調查：17 個行業 × 職類，資訊人員跨行業比較 |
+| `jobs.mjs` | 台灣就業通開放資料：資訊類現有職缺與薪資範圍 |
 | `privacy.mjs` | 人身攻擊字眼、姓氏＋職稱與聯絡資訊遮蔽、罕見職稱歸類 |
 | `takedowns.json` | 下架清單 |
 | `csv.mjs` | CSV 解析 |

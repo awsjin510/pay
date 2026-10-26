@@ -115,8 +115,36 @@ export type OccupationRef = {
 
 export type MolOccupation = { name: string; major: boolean; group: string | null; employees: number; monthly: number; annual: number | null };
 
+export type AcrossRow = { code: string; industry: string; major: boolean; employees: number; monthly: number; annual: number | null };
+
+export type JobPosting = {
+  title: string;
+  category: string;
+  openings: number;
+  deadline: string | null;
+  city: string;
+  experience: string;
+  education: string;
+  url: string;
+  company: string;
+  updated: string | null;
+  low: number | null;
+  high: number | null;
+  negotiable: boolean;
+};
+
 export type ItServices = {
-  mol: { year: number; annualYear: number; industries: { code: string; label: string; occupations: MolOccupation[] }[] } | null;
+  mol: {
+    year: number;
+    annualYear: number;
+    industries: { code: string; label: string; occupations: MolOccupation[] }[];
+    itAcross: { pro: AcrossRow[]; tech: AcrossRow[] };
+  } | null;
+  jobs: {
+    fetchedAt: string;
+    categories: { category: string; n: number; openings: number; lowMedian: number | null; highMedian: number | null }[];
+    list: JobPosting[];
+  };
   listed: (Official & { industryLabel: string; slug: string | null })[];
   crowd: {
     stats: Stats | null;

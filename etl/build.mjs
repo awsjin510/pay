@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseCsv } from "./csv.mjs";
 import { ANONYMOUS_PATTERNS, buildAliasIndex, COMPANIES, normalizeKey, sectorFromName } from "./companies.mjs";
+import { fetchJobs, readJobs } from "./jobs.mjs";
 import { fetchMol, occupationReference, readMol, ROLE_TO_OCCUPATION } from "./mol.mjs";
 import { fetchOfficial, INDUSTRY_LABELS, readOfficial } from "./official.mjs";
 import { HARSH, rareTitleFilter, scrubComment } from "./privacy.mjs";
@@ -325,6 +326,7 @@ async function main() {
     await fetchTabs();
     await fetchOfficial(RAW_DIR);
     await fetchMol(RAW_DIR);
+    await fetchJobs(RAW_DIR);
     await fetchWebSubmissions();
     await fetchOgFont();
   }
@@ -545,8 +547,20 @@ async function main() {
     companyList.filter((c) => itCodes.has(c.official?.industry) || COMPANIES_BY_NAME.get(c.name)?.itServices).map((c) => c.slug),
   );
   const itRows = submissions.filter((s) => itCompanySlugs.has(s.company));
+  const jobs = (await readJobs(RAW_DIR, TODAY)) ?? [];
+  const median = (xs) => {
+    const v = xs.filter((x) => x != null).sort((a, b) => a - b);
+    return v.length ? round(quantile(v, 0.5), 1) : null;
+  };
+  const jobCategories = [...new Set(jobs.map((j) => j.category))]
+    .map((category) => {
+      const js = jobs.filter((j) => j.category === category);
+      return { category, n: js.length, openings: js.reduce((t, j) => t + j.openings, 0), lowMedian: median(js.map((j) => j.low)), highMedian: median(js.map((j) => j.high)) };
+    })
+    .sort((a, b) => b.n - a.n);
   const itServices = {
     mol,
+    jobs: { fetchedAt: TODAY, categories: jobCategories, list: jobs.slice(0, 60) },
     listed: official
       .filter((o) => itCodes.has(o.industry))
       .map((o) => ({ ...o, industryLabel: INDUSTRY_LABELS[o.industry], slug: slugByOfficialCode.get(o.code) ?? null }))
@@ -604,7 +618,7 @@ async function main() {
     anonymousRows: submissions.filter((s) => !s.company).length,
     official: { year: officialYear, companies: official.length, matched: companyList.filter((c) => c.official).length },
     mol: mol ? { year: mol.year, annualYear: mol.annualYear } : null,
-    itServices: { listed: itServices.listed.length, crowdRows: itRows.length },
+    itServices: { listed: itServices.listed.length, crowdRows: itRows.length, jobs: jobs.length },
     years: Object.fromEntries(
       [...new Set(submissions.map((s) => s.year ?? "unknown"))].sort().map((y) => [y, submissions.filter((s) => (s.year ?? "unknown") === y).length]),
     ),
@@ -654,6 +668,22 @@ async function main() {
     new URL("industries.csv", PUBLIC_DATA_DIR),
     toCsv(tracks, [{ header: "產業", value: (r) => r.label }, ...statColumns]),
   );
+  if (mol) {
+    await writeFile(
+      new URL("it-occupations-by-industry.csv", PUBLIC_DATA_DIR),
+      toCsv(
+        [...mol.itAcross.pro.map((r) => ({ ...r, occ: "資訊及通訊專業人員" })), ...mol.itAcross.tech.map((r) => ({ ...r, occ: "資訊管理及維護技術員" }))],
+        [
+          { header: "職類", value: (r) => r.occ },
+          { header: "行業", value: (r) => r.industry },
+          { header: "行業代碼", value: (r) => r.code },
+          { header: "受僱人數", value: (r) => r.employees },
+          { header: `${mol.year}年7月經常性薪資(萬)`, value: (r) => r.monthly },
+          { header: `${mol.annualYear}年全年薪資(萬)`, value: (r) => r.annual },
+        ],
+      ),
+    );
+  }
   await writeFile(
     new URL("it-services-listed.csv", PUBLIC_DATA_DIR),
     toCsv(itServices.listed, [

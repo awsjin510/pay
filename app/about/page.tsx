@@ -30,10 +30,13 @@ export default function AboutPage() {
             <strong>官方揭露</strong>：公開資訊觀測站「非擔任主管職務之全時員工薪資」（證交所、櫃買中心開放資料），{meta.official.year} 年度共 {meta.official.companies.toLocaleString()} 間公司，
             其中 {meta.official.matched} 間對應到本站公司頁。
           </li>
+          <li>
+            <strong>台灣就業通職缺</strong>：勞動部勞動力發展署開放資料，資訊類全職職缺 {meta.itServices.jobs} 筆，每週更新。
+          </li>
           {meta.mol && (
             <li>
-              <strong>勞動部職類別薪資調查</strong>：{meta.mol.year} 年「出版影音及資通訊業（按職類別分）」，用於
-              <Link href="/sectors/it-services/" className="underline">資訊服務業專區</Link>與各職務頁的官方參考（政府資料開放授權條款第 1 版）。
+              <strong>勞動部職類別薪資調查</strong>：{meta.mol.year} 年 17 個行業「受僱員工人數、每人薪資（按職類別分）」，用於
+              <Link href="/sectors/it-services/" className="underline">資訊服務業專區</Link>（各職類、資訊人員跨行業比較）與各職務頁的官方參考（政府資料開放授權條款第 1 版）。
             </li>
           )}
         </ul>

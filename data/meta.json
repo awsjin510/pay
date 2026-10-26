@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T04:52:07.770Z",
+  "generatedAt": "2026-10-26T05:00:01.254Z",
   "site": "https://pay.operation.tw",
   "sheetId": "1-lMc-QktDGlO05je0zyR7P7QnfuoaECcsGUeKZZy6q0",
   "minN": 3,
@@ -22,7 +22,8 @@
   },
   "itServices": {
     "listed": 80,
-    "crowdRows": 67
+    "crowdRows": 67,
+    "jobs": 51
   },
   "years": {
     "2023": 1340,
