@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ShareCard, type ShareResult } from "@/components/ShareCard";
 
 type Status = { state: "idle" | "sending" | "done" | "error"; message?: string };
 
@@ -22,7 +23,7 @@ function formJson(form: HTMLFormElement) {
   return out;
 }
 
-const input = "w-full rounded border border-border bg-background px-3 py-2";
+const input = "w-full rounded-lg border border-border bg-background px-3 py-2";
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -40,94 +41,211 @@ const Honeypot = () => (
 );
 
 function Result({ status, done }: { status: Status; done: string }) {
-  if (status.state === "done") return <p className="rounded border border-accent p-3 text-sm">{done}</p>;
+  if (status.state === "done") return <p className="rounded-lg border border-accent p-3 text-sm">{done}</p>;
   if (status.state === "error") return <p className="text-sm text-ink" role="alert">⚠ {status.message}</p>;
   return null;
 }
 
+type IndexEntry = { s: string; n: string; e: string | null; a: string[]; t: string; c: number };
+type PrIndex = { tracks: Record<string, number[]>; companies: Record<string, number[]> };
+
+const TRACK_LABELS: Record<string, string> = { soft: "純軟", system: "系統廠", ic: "IC 設計" };
+const norm = (s: string) => s.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+const percentile = (values: number[], v: number) =>
+  Math.round(((values.filter((x) => x < v).length + values.filter((x) => x === v).length / 2) / values.length) * 100);
+
+let indexCache: Promise<IndexEntry[]> | null = null;
+const loadIndex = () => (indexCache ??= fetch("/search-index.json").then((r) => r.json() as Promise<IndexEntry[]>));
+
+const findCompany = (index: IndexEntry[], name: string) => {
+  const k = norm(name);
+  return index.find((e) => [e.n, e.e ?? "", ...e.a].some((x) => norm(x) === k));
+};
+
+async function shareResult(body: Record<string, unknown>): Promise<ShareResult | null> {
+  try {
+    const [pr, index] = await Promise.all([fetch("/pr-index.json").then((r) => r.json() as Promise<PrIndex>), loadIndex()]);
+    const monthly = Number(body.monthly);
+    const track = String(body.track);
+    const company = findCompany(index, String(body.company));
+    const companyValues = company ? pr.companies[company.s] : undefined;
+    return {
+      trackLabel: TRACK_LABELS[track],
+      trackPct: percentile(pr.tracks[track], monthly),
+      ...(company && companyValues ? { companyName: company.n, companyPct: percentile(companyValues, monthly) } : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+type Done = { status: "approved" | "pending"; share: ShareResult | null };
+
 export function SubmitForm() {
   const [status, setStatus] = useState<Status>({ state: "idle" });
-  if (status.state === "done")
-    return <Result status={status} done="感謝分享！投稿會在人工審核後（通常 7 天內）出現在網站上。" />;
+  const [done, setDone] = useState<Done | null>(null);
+  const [suggestions, setSuggestions] = useState<IndexEntry[]>([]);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Prefill from /submit/?company=mediatek (the company page button) and keep ?ref= for
+  // attribution. The page is static, so these are only known in the browser.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const q = new URLSearchParams(window.location.search);
+    const set = (name: string, value: string) => ((form.elements.namedItem(name) as HTMLInputElement).value = value);
+    let ref = q.get("ref");
+    try {
+      ref ??= sessionStorage.getItem("ref");
+    } catch {
+      // Storage blocked: only a ref in this URL counts.
+    }
+    if (ref) set("ref", ref);
+    const slug = q.get("company");
+    loadIndex().then((index) => {
+      setSuggestions([...index].sort((a, b) => b.c - a.c).slice(0, 400));
+      const hit = slug ? index.find((e) => e.s === slug) : undefined;
+      if (hit) {
+        set("company", hit.n);
+        set("track", hit.t);
+      }
+    });
+  }, []);
+
+  if (done)
+    return (
+      <div className="space-y-5">
+        <div className="rounded-xl border border-accent bg-accent-soft p-4">
+          <p className="font-medium">感謝分享！</p>
+          <p className="mt-1 text-sm text-ink-2">
+            {done.status === "approved"
+              ? "數字看起來合理，已自動通過，會在下一次每週更新時出現在網站上。"
+              : "因為有填寫心得或需要確認的數字，會在人工審核後（通常 7 天內）公開。"}
+          </p>
+        </div>
+        {done.share && (
+          <div>
+            <h2 className="text-xl font-bold">你的位置</h2>
+            <p className="mt-1 mb-3 text-ink-2">
+              你的月底薪高於 <strong className="num text-2xl text-ink">{done.share.trackPct}%</strong> 的「{done.share.trackLabel}」分享
+              {done.share.companyName && done.share.companyPct != null && (
+                <>
+                  ，在{done.share.companyName}高於 <strong className="num text-2xl text-ink">{done.share.companyPct}%</strong>
+                </>
+              )}
+              。
+            </p>
+            <ShareCard result={done.share} />
+          </div>
+        )}
+      </div>
+    );
 
   return (
     <form
+      ref={formRef}
       className="relative space-y-5"
       onSubmit={async (e) => {
         e.preventDefault();
-        const body = formJson(e.currentTarget);
-        body.agree = (e.currentTarget.elements.namedItem("agree") as HTMLInputElement).checked;
+        const form = e.currentTarget;
+        const body = formJson(form);
+        body.agree = (form.elements.namedItem("agree") as HTMLInputElement).checked;
         setStatus({ state: "sending" });
-        setStatus(await post("/api/submissions", body));
+        try {
+          const res = await fetch("/api/submissions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+          const data = (await res.json().catch(() => ({}))) as { error?: string; status?: "approved" | "pending" };
+          if (!res.ok) {
+            setStatus({ state: "error", message: data.error ?? `送出失敗（${res.status}）` });
+            return;
+          }
+          setDone({ status: data.status ?? "pending", share: await shareResult(body) });
+        } catch {
+          setStatus({ state: "error", message: "網路錯誤，請稍後再試" });
+        }
       }}
     >
       <Honeypot />
+      <input type="hidden" name="ref" />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="產業 *">
+        <Field label="產業">
           <select name="track" required className={input} defaultValue="">
             <option value="" disabled>
               請選擇
             </option>
-            <option value="soft">純軟</option>
-            <option value="system">系統廠 / 硬體</option>
+            <option value="soft">純軟（含資訊服務、雲端、資安）</option>
+            <option value="system">系統廠／硬體</option>
             <option value="ic">IC 設計</option>
           </select>
         </Field>
-        <Field label="公司 *" hint="可用代號，例如「螃蟹」，但請別寫部門或主管姓名">
-          <input name="company" required maxLength={80} className={input} />
+        <Field label="公司" hint="可用代號，例如「螃蟹」">
+          <input name="company" required maxLength={80} list="company-suggestions" autoComplete="off" className={input} />
+          <datalist id="company-suggestions">
+            {suggestions.map((e) => (
+              <option key={e.s} value={e.n} />
+            ))}
+          </datalist>
         </Field>
-        <Field label="職務 *" hint="例如 SRE、資安研究員、韌體工程師">
+        <Field label="職務" hint="例如 SRE、韌體工程師、PM">
           <input name="role" required maxLength={60} className={input} />
         </Field>
-        <Field label="職級" hint="例如 E7、L4；不確定可留空">
-          <input name="level" maxLength={30} className={input} />
-        </Field>
         <Field label="相關年資（年）">
-          <input name="yoe" type="number" min={0} max={50} step={0.5} className={input} />
+          <input name="yoe" type="number" required min={0} max={50} step={0.5} className={input} />
         </Field>
-        <Field label="現職年資（年）">
-          <input name="yoe_current" type="number" min={0} max={50} step={0.5} className={input} />
-        </Field>
-        <Field label="月底薪（萬）*" hint="例如 7.5，不是 75000">
+        <Field label="月底薪（萬）" hint="例如 7.5，不是 75000">
           <input name="monthly" type="number" required min={2} max={80} step={0.1} className={input} />
         </Field>
-        <Field label="年終＋獎金（幾個月，不含分紅）">
+        <Field label="年終＋獎金（幾個月，選填）" hint="不含分紅">
           <input name="bonus_months" type="number" min={0} max={60} step={0.1} className={input} />
         </Field>
-        <Field label="總年薪（萬，含分紅）">
-          <input name="annual" type="number" min={15} max={3000} step={1} className={input} />
-        </Field>
-        <Field label="每日平均工時（小時）">
-          <input name="hours_per_day" type="number" min={1} max={16} step={0.5} className={input} />
-        </Field>
-        <Field label="每月加班（小時）">
-          <input name="overtime_per_month" type="number" min={0} max={250} step={1} className={input} />
-        </Field>
-        <Field label="加班頻率（1 很少 – 5 很常）">
-          <input name="overtime_freq" type="number" min={1} max={5} step={1} className={input} />
-        </Field>
-        <Field label="爽度（1–5，5 最爽）">
-          <input name="happiness" type="number" min={1} max={5} step={1} className={input} />
-        </Field>
-        <Field label="Loading（1–5，5 最重）">
-          <input name="loading" type="number" min={1} max={5} step={1} className={input} />
-        </Field>
       </div>
-      <Field label="證照（雲端 / 資安選填）" hint="例如 AWS SAA、CKA、OSCP、CISSP">
-        <input name="certifications" maxLength={120} className={input} />
-      </Field>
-      <Field label="面試題型（選填）" hint="例如 系統設計、K8s 架構、Leetcode medium、CTF">
-        <input name="interview_topics" maxLength={400} className={input} />
-      </Field>
-      <Field label="心得（選填）" hint="可寫主觀感受與建議；請勿寫姓名、未經證實的指控或可辨識個人的細節">
-        <textarea name="comment" maxLength={1000} rows={4} className={input} />
-      </Field>
+
+      <details className="rounded-xl border border-border bg-surface px-4 py-3">
+        <summary className="cursor-pointer text-sm font-medium">填更多細節（選填，讓資料更有參考價值）</summary>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field label="職級" hint="例如 E7、L4">
+            <input name="level" maxLength={30} className={input} />
+          </Field>
+          <Field label="現職年資（年）">
+            <input name="yoe_current" type="number" min={0} max={50} step={0.5} className={input} />
+          </Field>
+          <Field label="總年薪（萬，含分紅）">
+            <input name="annual" type="number" min={15} max={3000} step={1} className={input} />
+          </Field>
+          <Field label="每日平均工時（小時）">
+            <input name="hours_per_day" type="number" min={1} max={16} step={0.5} className={input} />
+          </Field>
+          <Field label="每月加班（小時）">
+            <input name="overtime_per_month" type="number" min={0} max={250} step={1} className={input} />
+          </Field>
+          <Field label="加班頻率（1 很少 – 5 很常）">
+            <input name="overtime_freq" type="number" min={1} max={5} step={1} className={input} />
+          </Field>
+          <Field label="爽度（1–5，5 最爽）">
+            <input name="happiness" type="number" min={1} max={5} step={1} className={input} />
+          </Field>
+          <Field label="Loading（1–5，5 最重）">
+            <input name="loading" type="number" min={1} max={5} step={1} className={input} />
+          </Field>
+        </div>
+        <div className="mt-4 space-y-4">
+          <Field label="證照（雲端／資安）" hint="例如 AWS SAA、CKA、OSCP、CISSP">
+            <input name="certifications" maxLength={120} className={input} />
+          </Field>
+          <Field label="面試題型" hint="例如 系統設計、K8s 架構、Leetcode medium、CTF">
+            <input name="interview_topics" maxLength={400} className={input} />
+          </Field>
+          <Field label="心得" hint="主觀感受與建議都可以；請勿寫姓名、未經證實的指控或能認出人的細節。有填文字的投稿會人工審核">
+            <textarea name="comment" maxLength={1000} rows={4} className={input} />
+          </Field>
+        </div>
+      </details>
+
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="agree" required className="mt-1" />
-        <span>我確認內容為本人真實經驗，並同意下方的投稿規範與以 CC BY 4.0 彙總公開。</span>
+        <span>我確認內容為本人真實經驗，並同意投稿規範與以 CC BY 4.0 彙總公開。</span>
       </label>
-      <button disabled={status.state === "sending"} className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-ink disabled:opacity-60">
-        {status.state === "sending" ? "送出中…" : "送出投稿"}
+      <button disabled={status.state === "sending"} className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-accent-ink disabled:opacity-60">
+        {status.state === "sending" ? "送出中…" : "送出，看我的位置"}
       </button>
       <Result status={status} done="" />
     </form>

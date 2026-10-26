@@ -29,6 +29,7 @@ export const viewport: Viewport = {
 const themeScript = `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
 const FOOTER = [
+  { href: "/insights/", label: "季度薪資報告" },
   { href: "/submit/", label: "分享薪資" },
   { href: "/report/", label: "下架申請與回報" },
   { href: "/nicknames/", label: "PTT 代號對照" },

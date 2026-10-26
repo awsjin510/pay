@@ -68,36 +68,67 @@ async function createSubmission(request: Request, env: Env) {
   if (b.agree !== true) throw new Invalid("請勾選同意投稿規範");
   const track = str(b.track, "產業", 10, true)!;
   if (!["soft", "system", "ic"].includes(track)) throw new Invalid("產業不正確");
-  const values = [
-    track,
-    str(b.company, "公司", 80, true),
-    str(b.role, "職務", 60, true),
-    str(b.level, "職級", 30),
-    numIn(b.yoe, "相關年資", 0, 50),
-    numIn(b.yoe_current, "現職年資", 0, 50),
-    numIn(b.monthly, "月底薪", 2, 80, true),
-    numIn(b.bonus_months, "Bonus", 0, 60),
-    numIn(b.annual, "總年薪", 15, 3000),
-    numIn(b.hours_per_day, "每日工時", 1, 16),
-    numIn(b.overtime_per_month, "每月加班", 0, 250),
-    numIn(b.overtime_freq, "加班頻率", 1, 5),
-    numIn(b.happiness, "爽度", 1, 5),
-    numIn(b.loading, "Loading", 1, 5),
-    str(b.certifications, "證照", 120),
-    str(b.interview_topics, "面試題型", 400),
-    str(b.comment, "心得", 1000),
-  ];
+  const company = str(b.company, "公司", 80, true)!;
+  const role = str(b.role, "職務", 60, true)!;
+  const monthly = numIn(b.monthly, "月底薪", 2, 80, true)!;
+  const bonus = numIn(b.bonus_months, "Bonus", 0, 60);
+  const annual = numIn(b.annual, "總年薪", 15, 3000);
+  const certifications = str(b.certifications, "證照", 120);
+  const interviewTopics = str(b.interview_topics, "面試題型", 400);
+  const comment = str(b.comment, "心得", 1000);
+  const ref = typeof b.ref === "string" ? b.ref.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40) || null : null;
+  const auto = autoApprovable({ company, role, monthly, bonus, annual, freeText: [certifications, interviewTopics, comment] });
+
   const hash = await ipHash(request);
   if (await overLimit(env.pay_db, "submissions", hash)) return json({ error: "今天投稿次數已達上限，請明天再試" }, 429);
   await env.pay_db
     .prepare(
       `INSERT INTO submissions (track, company, role, level, yoe, yoe_current, monthly, bonus_months, annual,
-        hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment, ip_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        hours_per_day, overtime_per_month, overtime_freq, happiness, loading, certifications, interview_topics, comment,
+        ip_hash, ref, status, auto_approved)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(...values, hash)
+    .bind(
+      track,
+      company,
+      role,
+      str(b.level, "職級", 30),
+      numIn(b.yoe, "相關年資", 0, 50),
+      numIn(b.yoe_current, "現職年資", 0, 50),
+      monthly,
+      bonus,
+      annual,
+      numIn(b.hours_per_day, "每日工時", 1, 16),
+      numIn(b.overtime_per_month, "每月加班", 0, 250),
+      numIn(b.overtime_freq, "加班頻率", 1, 5),
+      numIn(b.happiness, "爽度", 1, 5),
+      numIn(b.loading, "Loading", 1, 5),
+      certifications,
+      interviewTopics,
+      comment,
+      hash,
+      ref,
+      auto ? "approved" : "pending",
+      auto ? 1 : 0,
+    )
     .run();
-  return json({ ok: true }, 201);
+  return json({ ok: true, status: auto ? "approved" : "pending" }, 201);
+}
+
+// Numbers-only submissions with plausible values skip the queue; anything with free text
+// (心得, 證照, 面試題型) or odd numbers waits for a person. Weekly sync publishes approved rows.
+const CONTACT_OR_LINK = /https?:|www\.|@|\d{4}[-\s]?\d{3}[-\s]?\d{3}/i;
+function autoApprovable(x: { company: string; role: string; monthly: number; bonus: number | null; annual: number | null; freeText: (string | null)[] }) {
+  if (x.freeText.some(Boolean)) return false;
+  if (CONTACT_OR_LINK.test(x.company) || CONTACT_OR_LINK.test(x.role)) return false;
+  if (/^\d+$/.test(x.company) || x.company.length < 2) return false;
+  if (x.monthly < 2.5 || x.monthly > 40) return false;
+  if (x.bonus != null && x.bonus > 24) return false;
+  if (x.annual != null) {
+    const est = x.monthly * (12 + (x.bonus ?? 0));
+    if (x.annual < x.monthly * 12 * 0.9 || x.annual > est * 4) return false;
+  }
+  return true;
 }
 
 async function createReport(request: Request, env: Env) {
@@ -114,6 +145,13 @@ async function createReport(request: Request, env: Env) {
     .bind(kind, str(b.target, "對象", 300), message, str(b.contact, "聯絡方式", 120), hash)
     .run();
   return json({ ok: true }, 201);
+}
+
+// Counts only, for the daily review reminder (.github/workflows/review-alert.yml).
+async function pendingCount(env: Env) {
+  const subs = await env.pay_db.prepare("SELECT COUNT(*) AS n FROM submissions WHERE status = 'pending'").first<{ n: number }>();
+  const reports = await env.pay_db.prepare("SELECT COUNT(*) AS n FROM reports WHERE status = 'open'").first<{ n: number }>();
+  return json({ submissions: subs?.n ?? 0, reports: reports?.n ?? 0 }, 200, { "cache-control": "no-store" });
 }
 
 // Read by the site build (etl/build.mjs). Public columns of approved rows only.
@@ -135,6 +173,7 @@ const worker = {
       if (pathname === "/api/submissions" && request.method === "POST") return await createSubmission(request, env);
       if (pathname === "/api/reports" && request.method === "POST") return await createReport(request, env);
       if (pathname === "/api/approved" && request.method === "GET") return await listApproved(env);
+      if (pathname === "/api/pending-count" && request.method === "GET") return await pendingCount(env);
       if (pathname.startsWith("/api/")) return json({ error: "not found" }, 404);
       return env.ASSETS.fetch(request);
     } catch (e) {

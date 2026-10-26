@@ -12,7 +12,9 @@ export default function SubmitPage() {
     <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
       <section>
         <h1 className="text-3xl font-black sm:text-4xl">匿名分享薪資</h1>
-        <p className="mt-2 mb-6 text-sm text-ink-2">不需要註冊。每筆投稿人工審核後才會公開，網站資料永遠免費查詢，不用「分享才解鎖」。</p>
+        <p className="mt-2 mb-6 text-ink-2">
+          30 秒、不用註冊。送出後馬上看到你在同產業、同公司的位置，還能下載一張不含金額的分享圖。網站資料永遠免費查詢。
+        </p>
         <SubmitForm />
       </section>
       <aside className="space-y-4 text-sm leading-7">
@@ -22,6 +24,7 @@ export default function SubmitPage() {
           <li>主觀感受（推不推、累不累、氣氛）可以寫；請勿寫人名、具名指控或未經證實的違法情事。</li>
           <li>不要寫部門代號、主管姓氏、專案名稱等能認出你或他人的細節。</li>
           <li>同一職稱在全站只出現一次時，公開時會改顯示職務分類，保護投稿者。</li>
+          <li>只有數字、且數字合理的投稿會自動通過；有填心得、證照、面試題型等文字的投稿，人工審核後才公開。</li>
           <li>明顯錯誤、重複或廣告的投稿不予刊登。</li>
         </ul>
         <h2 className="text-xl font-bold">隱私</h2>

@@ -68,6 +68,16 @@ export function SiteHeader() {
   const pathname = usePathname();
   const dropdown = useRef<HTMLDivElement>(null);
 
+  // Remember where a visitor came from (?ref=podcast …) so a later submission can credit it.
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    try {
+      if (ref) sessionStorage.setItem("ref", ref);
+    } catch {
+      // Storage blocked: attribution is best-effort.
+    }
+  }, []);
+
   // Ctrl/⌘+K or "/" opens search from anywhere (except while typing in a field).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

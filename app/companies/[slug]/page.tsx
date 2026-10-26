@@ -133,7 +133,7 @@ export default async function CompanyPage({ params }: Props) {
             <Link href={`/compare/?c=${c.slug}`} className="rounded-xl border border-border bg-surface px-3.5 py-2 text-sm hover:border-accent">
               和其他公司比較
             </Link>
-            <Link href="/submit/" className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink hover:opacity-90">
+            <Link href={`/submit/?company=${c.slug}`} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink hover:opacity-90">
               分享我在{c.name}的薪資
             </Link>
           </div>

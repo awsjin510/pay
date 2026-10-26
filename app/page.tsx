@@ -123,9 +123,14 @@ export default function Home() {
         <div>
           <div className="flex items-baseline justify-between">
             <h2 className="text-2xl font-bold">資料最多的公司</h2>
-            <Link href="/compare/" className="text-sm text-accent hover:underline">
-              並排比較
-            </Link>
+            <span className="flex gap-4 text-sm">
+              <Link href="/insights/" className="text-accent hover:underline">
+                季度報告
+              </Link>
+              <Link href="/compare/" className="text-accent hover:underline">
+                並排比較
+              </Link>
+            </span>
           </div>
           <ol className="mt-3 divide-y divide-border border-y border-border">
             {popular.map((c, i) => (

@@ -645,6 +645,15 @@ async function main() {
     ),
   );
 
+  // After submitting, the form shows the person's percentile from these sorted values.
+  await writeFile(
+    new URL("../public/pr-index.json", import.meta.url),
+    JSON.stringify({
+      tracks: Object.fromEntries(tracks.map((t) => [t.id, t.monthlyValues])),
+      companies: Object.fromEntries(companyList.filter((c) => c.monthlyValues.length >= MIN_N).map((c) => [c.slug, c.monthlyValues])),
+    }),
+  );
+
   // Open data: aggregates only, never individual rows or comments.
   await writeFile(
     new URL("companies.csv", PUBLIC_DATA_DIR),

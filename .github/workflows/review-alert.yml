@@ -1,0 +1,39 @@
+# Daily: if submissions or reports are waiting for review, keep one open issue up to date so
+# GitHub emails the repo owner. The issue only shows counts — this repo is public.
+name: Review reminder
+
+on:
+  schedule:
+    - cron: "0 1 * * *" # 09:00 Asia/Taipei
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check queue and update issue
+        run: |
+          counts=$(curl -fsS https://pay.operation.tw/api/pending-count)
+          subs=$(echo "$counts" | jq .submissions)
+          reports=$(echo "$counts" | jq .reports)
+          echo "pending submissions=$subs reports=$reports"
+          gh label create review-queue --color C2362F --description "待審投稿與回報" --force >/dev/null
+          issue=$(gh issue list --label review-queue --state open --json number --jq '.[0].number // empty')
+          if [ "$subs" -eq 0 ] && [ "$reports" -eq 0 ]; then
+            if [ -n "$issue" ]; then gh issue close "$issue" --comment "待審清單已清空。"; fi
+            exit 0
+          fi
+          body="待審投稿 **$subs** 筆、未處理回報 **$reports** 筆（$(date -u -d '+8 hours' '+%Y-%m-%d %H:%M') 台灣時間）。
+
+          在本機執行 \`npm run review\` 查看並處理。下架申請請在 7 個工作天內回覆。"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$body"
+          else
+            gh issue create --title "有待審的投稿或回報" --label review-queue --body "$body"
+          fi
