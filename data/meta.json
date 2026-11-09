@@ -1,25 +1,25 @@
 {
-  "generatedAt": "2026-11-02T07:06:31.915Z",
+  "generatedAt": "2026-11-09T07:35:37.020Z",
   "site": "https://pay.operation.tw",
   "sheetId": "1-lMc-QktDGlO05je0zyR7P7QnfuoaECcsGUeKZZy6q0",
   "minN": 3,
   "recentFromYear": 2025,
-  "total": 2109,
+  "total": 2110,
   "sources": {
-    "sheet": 2109,
+    "sheet": 2110,
     "web": 0
   },
   "namedCompanies": 766,
   "anonymousRows": 103,
   "official": {
     "year": 2025,
-    "companies": 1819,
+    "companies": 1820,
     "matched": 96
   },
   "estimate": {
     "year": 2026,
     "growth": 2.7,
-    "basis": 1751
+    "basis": 1752
   },
   "mol": {
     "year": 2025,
@@ -28,13 +28,13 @@
   "itServices": {
     "listed": 80,
     "crowdRows": 67,
-    "jobs": 50
+    "jobs": 53
   },
   "years": {
     "2023": 1340,
     "2024": 324,
     "2025": 201,
-    "2026": 239,
+    "2026": 240,
     "unknown": 5
   },
   "flags": {
